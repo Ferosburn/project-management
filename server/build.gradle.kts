@@ -25,6 +25,8 @@ dependencies {
     implementation(libs.h2)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.bcrypt)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.testJunit)
 }
