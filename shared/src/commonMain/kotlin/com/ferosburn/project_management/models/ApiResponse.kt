@@ -24,26 +24,39 @@ data class ApiResponse<T>(
             data,
         )
 
-        fun notFound() = ApiResponse<Unit>(
+        fun notFound(errors: List<String>? = null) = ApiResponse<Nothing>(
             HttpStatusCode.NotFound.value,
             HttpStatusCode.NotFound.description,
+            errors = errors,
         )
 
-        fun badRequest(errors: List<String>) = ApiResponse<Unit>(
+        fun badRequest(errors: List<String>? = null) = ApiResponse<Nothing>(
             HttpStatusCode.BadRequest.value,
             HttpStatusCode.BadRequest.description,
             errors = errors,
         )
 
-        fun conflict(errors: List<String>?) = ApiResponse<Unit>(
+        fun conflict(errors: List<String>? = null) = ApiResponse<Nothing>(
             HttpStatusCode.Conflict.value,
             HttpStatusCode.Conflict.description,
             errors = errors,
         )
 
-        fun internalError(errors: List<String>? = null) = ApiResponse<Unit>(
+        fun internalError(errors: List<String>? = null) = ApiResponse<Nothing>(
             HttpStatusCode.InternalServerError.value,
             HttpStatusCode.InternalServerError.description,
+            errors = errors,
+        )
+
+        fun unauthorized(errors: List<String>? = null) = ApiResponse<Nothing>(
+            HttpStatusCode.Unauthorized.value,
+            HttpStatusCode.Unauthorized.description,
+            errors = errors,
+        )
+
+        fun forbidden(errors: List<String>? = null) = ApiResponse<Nothing>(
+            HttpStatusCode.Forbidden.value,
+            HttpStatusCode.Forbidden.description,
             errors = errors,
         )
     }

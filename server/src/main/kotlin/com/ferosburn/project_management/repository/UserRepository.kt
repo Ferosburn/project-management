@@ -9,6 +9,8 @@ import com.ferosburn.project_management.models.user.UserFilter
 import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.models.user.UserUpdateReq
+import com.ferosburn.project_management.utils.BadRequestException
+import com.ferosburn.project_management.utils.InternalServerException
 import com.ferosburn.project_management.utils.PasswordUtils
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
@@ -49,10 +51,11 @@ class UserRepository : UserRepositoryInterface {
             row[name] = data.name
             row[username] = data.username
             row[passwordHash] = PasswordUtils.hash(data.password)
-            row[role] = data.role?.let { UserRole.valueOf(it) } ?: error("Role is required")
+            row[role] = data.role?.let { UserRole.valueOf(it) } ?: throw BadRequestException("Role is required")
             row[division] = data.division?.let { UserDivision.valueOf(it) }
         }
-        insertStatement.resultedValues?.singleOrNull()?.let { mapToUserRes(it) } ?: error("Failed to insert user")
+        insertStatement.resultedValues?.singleOrNull()?.let { mapToUserRes(it) }
+            ?: throw InternalServerException("Failed to insert user")
     }
 
     override fun update(
