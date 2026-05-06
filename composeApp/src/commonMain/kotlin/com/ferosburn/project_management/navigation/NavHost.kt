@@ -32,6 +32,7 @@ internal fun NavHost(
     val navigator = remember(navState) {
         Navigator(navState)
     }
+    BrowserIntegration(navState)
     val entryProvider = entryProvider {
         screens(
             navigator = navigator,
