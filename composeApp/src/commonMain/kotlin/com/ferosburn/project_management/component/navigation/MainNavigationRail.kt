@@ -61,7 +61,6 @@ private fun NavigationRailMenuItem(
     SharedTransitionLayout(
         modifier.selectable(
             selected = isSelected,
-            enabled = !isSelected,
             role = Role.Tab,
             onClick = onClick,
         )

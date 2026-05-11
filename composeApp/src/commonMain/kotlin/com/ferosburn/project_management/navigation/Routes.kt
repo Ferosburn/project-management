@@ -10,8 +10,11 @@ sealed interface AppRoute
 sealed interface MainNavRoute : AppRoute
 
 @Serializable
+sealed interface RootRoute : AppRoute
+
+@Serializable
 @SerialName("Login")
-data object LoginScreen : AppRoute
+data object LoginScreen : AppRoute, RootRoute
 
 @Serializable
 @SerialName("Dashboard")
@@ -20,6 +23,10 @@ data object DashboardScreen : AppRoute, MainNavRoute
 @Serializable
 @SerialName("Projects")
 data object ProjectsScreen : AppRoute, MainNavRoute
+
+@Serializable
+@SerialName("ProjectDetail")
+data object ProjectDetailScreen : AppRoute
 
 @Serializable
 @SerialName("Reports")

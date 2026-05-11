@@ -6,18 +6,14 @@ import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.ferosburn.project_management.screen.AccountScreen
-import com.ferosburn.project_management.screen.ContributorsScreen
-import com.ferosburn.project_management.screen.DashboardScreen
-import com.ferosburn.project_management.screen.LoginScreen
-import com.ferosburn.project_management.screen.ProjectsScreen
-import com.ferosburn.project_management.screen.ReportsScreen
+import com.ferosburn.project_management.screen.*
 
 @Composable
 internal fun NavHost(
-    isLoggedIn: Boolean,
+    /*isLoggedIn: Boolean,*/
 ) {
-    val startRoute = remember { if (isLoggedIn) DashboardScreen else LoginScreen }
+    /*val startRoute = remember { if (isLoggedIn) DashboardScreen else LoginScreen }*/
+    val startRoute = remember { LoginScreen }
     val navState = rememberNavState(
         startRoute = startRoute,
         topLevelRoutes = setOf(
@@ -57,13 +53,22 @@ private fun EntryProviderScope<AppRoute>.screens(
     onBack: () -> Unit
 ) {
     entry<LoginScreen> {
-        LoginScreen()
+        LoginScreen(
+            onLoginClicked = { navigator.set(DashboardScreen) },
+        )
     }
     entry<DashboardScreen> {
-        DashboardScreen()
+        DashboardScreen(
+            logout = { navigator.set(LoginScreen) },
+        )
     }
     entry<ProjectsScreen> {
-        ProjectsScreen()
+        ProjectsScreen(
+            onProjectClick = { navigator.add(ProjectDetailScreen) },
+        )
+    }
+    entry<ProjectDetailScreen> {
+        ProjectDetailScreen()
     }
     entry<ReportsScreen> {
         ReportsScreen()

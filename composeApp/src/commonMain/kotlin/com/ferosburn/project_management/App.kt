@@ -13,6 +13,6 @@ fun App() {
     CompositionLocalProvider(
         LocalWindowSize provides windowSize(),
     ) {
-        NavHost(isLoggedIn = true)
+        NavHost()
     }
 }

@@ -40,6 +40,11 @@ class Navigator(
         }
     }
 
+    fun set(route: AppRoute) {
+        state.currentBackstack.clear()
+        add(route)
+    }
+
     fun activate(route: MainNavRoute, withReselection: Boolean = true) {
         if (withReselection && route == state.topLevelRoute) {
             val currentBackstack = state.currentBackstack

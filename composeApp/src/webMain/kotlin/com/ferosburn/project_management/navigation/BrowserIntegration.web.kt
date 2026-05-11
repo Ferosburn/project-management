@@ -10,12 +10,31 @@ import kotlin.js.js
 @Composable
 actual fun BrowserIntegration(navState: NavState) {
     val isMobile = remember { isMobileBrowser() }
+    fun extracted() {
+        val current = navState.currentBackstack
+        val lastItem = current.lastOrNull()
+        if (current.size > 1 && lastItem != null && lastItem is RootRoute) {
+            navState.topLevelRoute = null
+            navState.defaultBackstack.clear()
+            navState.defaultBackstack.add(lastItem)
+            navState.currentBackstack.clear()
+            navState.currentBackstack.add(lastItem)
+        }
+    }
+
+    print("currentBackstack: " + navState.currentBackstack.toList())
+    print("topLevelRoute: " + navState.topLevelRoute)
+    print("primaryMainNavRoute: " + navState.primaryMainNavRoute)
+    print("defaultBackstack: " + navState.defaultBackstack.toList())
+    print("mainNavBackStacks: \n" + navState.mainNavBackStacks.entries.joinToString("\n") { ">" + it.value.toList() })
+
     if (isMobile) {
         HierarchicalBrowserNavigation(
             currentDestination = remember { derivedStateOf { navState.currentBackstack.lastOrNull() } },
             currentDestinationName = { it?.toBrowserHistoryFragment() },
         )
     } else {
+        extracted()
         ChronologicalBrowserNavigation(
             backStack = navState.currentBackstack,
             saveKey = { key -> key.toBrowserHistoryFragment() },
@@ -23,16 +42,18 @@ actual fun BrowserIntegration(navState: NavState) {
                 val name = getBrowserHistoryFragmentName(fragment)
                 val params = getBrowserHistoryFragmentParameters(fragment)
 
+
                 when (name) {
                     AccountScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> AccountScreen
                     ContributorsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorsScreen
                     DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> DashboardScreen
                     LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> LoginScreen
                     ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectsScreen
+                    ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectDetailScreen
                     ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ReportsScreen
                     else -> null
                 }
-            }
+            },
         )
     }
 }
@@ -56,6 +77,7 @@ private fun AppRoute.toBrowserHistoryFragment() = when (val key = this) {
     DashboardScreen -> buildBrowserHistoryFragment(DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     LoginScreen -> buildBrowserHistoryFragment(LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     ProjectsScreen -> buildBrowserHistoryFragment(ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    ProjectDetailScreen -> buildBrowserHistoryFragment(ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     ReportsScreen -> buildBrowserHistoryFragment(ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
 }
 

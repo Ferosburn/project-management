@@ -1,5 +1,6 @@
 package com.ferosburn.project_management.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -9,14 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-@Preview
-fun DashboardScreen() {
+fun DashboardScreen(
+    logout: () -> Unit,
+) {
     Box(
         Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Dashboard Screen",
+            "Dashboard Screen",
+            Modifier.clickable(onClick = logout),
         )
     }
 }

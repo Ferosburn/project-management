@@ -1,12 +1,25 @@
 package com.ferosburn.project_management.navigation
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationConstants
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.outlined.Assignment
@@ -14,15 +27,22 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.LogoDev
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.DeveloperBoard
 import androidx.compose.material.icons.outlined.Engineering
 import androidx.compose.material.icons.outlined.LogoDev
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumeAllChanges
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.ferosburn.project_management.component.navigation.MainNavigationBar
@@ -72,9 +92,19 @@ fun NavScaffold(
         navigator.activate(route)
     }
     val windowSize = LocalWindowSize.current
+    var isMobileNavOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(navState.topLevelRoute) {
+        isMobileNavOpen = false
+    }
     val showLargeNavigation = windowSize != WindowSize.COMPACT && navState.topLevelRoute != null
-    val showCompactNavigation =
-        windowSize == WindowSize.COMPACT && navState.topLevelRoute != null && navState.currentBackstack.size == 1/* && !isKeyboardOpen()*/
+    val showMobileNav =
+        windowSize == WindowSize.COMPACT && navState.topLevelRoute != null/* && navState.currentBackstack.size == 1 && !isKeyboardOpen()*/
+
+//    NavigationBackHandler(
+//        isBackEnabled = isMobileNavOpen
+//    ) {
+//        isMobileNavOpen = false
+//    }
 
     Row(
         Modifier.fillMaxSize()
@@ -93,21 +123,79 @@ fun NavScaffold(
                 expanded = windowSize == WindowSize.EXPANDED,
             )
         }
-        Column(Modifier.weight(1f)) {
-            Box(Modifier.weight(1f).clipToBounds()) {
-                content()
+        Box(Modifier.weight(1f).clipToBounds().pointerInput(showMobileNav) {
+            if (!showMobileNav) return@pointerInput
+            detectHorizontalDragGestures(
+                onHorizontalDrag = { _, dragAmount ->
+                    isMobileNavOpen = if (dragAmount > 50f) true else false
+                }
+            )
+        }) {
+            content()
+            if (showMobileNav) {
+                IconButton(
+                    onClick = { isMobileNavOpen = true },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                ) {
+                    Icon(Icons.Default.Menu, contentDescription = "Open navigation")
+                }
             }
-            AnimatedVisibility(
-                visible = showCompactNavigation,
-                enter = expandVertically(enterAnimSpec),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                BottomNavigation(
+            if (showMobileNav) {
+                MobileNavOverlay(
+                    isOpen = isMobileNavOpen,
                     currentRoute = navState.topLevelRoute,
-                    /*destinations = destinations,*/
-                    onSelectRoute = onSelectRoute,
+                    onSelectRoute = {
+                        onSelectRoute(it)
+                        isMobileNavOpen = false  // close after selecting
+                    },
+                    onDismiss = { isMobileNavOpen = false }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun MobileNavOverlay(
+    isOpen: Boolean,
+    currentRoute: MainNavRoute?,
+    onSelectRoute: (MainNavRoute) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = isOpen,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onDismiss() }
+        )
+    }
+    AnimatedVisibility(
+        visible = isOpen,
+        enter = slideInHorizontally(
+            initialOffsetX = { -it },
+            animationSpec = tween(300)
+        ),
+        exit = slideOutHorizontally(
+            targetOffsetX = { -it },
+            animationSpec = tween(300)
+        ),
+    ) {
+        Box(Modifier.fillMaxHeight().fillMaxWidth(0.75f).background(Color.White)) {
+            SideNavigation(
+                currentRoute = currentRoute,
+                onSelectRoute = onSelectRoute,
+                expanded = true,
+            )
         }
     }
 }
