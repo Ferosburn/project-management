@@ -59,6 +59,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.androidx.navigation3.ui)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(projects.shared)
         }
@@ -68,6 +70,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.ktor.client.cio)
         }
         webMain.dependencies {
             implementation(libs.nav3.browser)

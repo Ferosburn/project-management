@@ -51,6 +51,9 @@ compose-material-icons-core = { module = "org.jetbrains.compose.material:materia
 compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "material-icons" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 nav3-browser = { module = "com.github.terrakok:navigation3-browser", version.ref = "nav3-browser" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 # server
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }

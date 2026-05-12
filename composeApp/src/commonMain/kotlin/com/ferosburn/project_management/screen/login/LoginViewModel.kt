@@ -5,11 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ferosburn.project_management.models.auth.AuthLoginReq
+import com.ferosburn.project_management.network.AuthApi
+import com.ferosburn.project_management.network.NetworkResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class LoginViewModel : ViewModel() {
@@ -51,13 +53,16 @@ class LoginViewModel : ViewModel() {
     fun login() {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            delay(2000.milliseconds)
-            if (username == "ferosburn" && password == "1Sampai8") {
-                _uiState.value = LoginUiState.Success
-            } else {
-                _uiState.value = LoginUiState.Error("username or password is invalid")
-                delay(3.seconds)
-                _uiState.value = LoginUiState.Initial
+            when (val result = AuthApi.login(AuthLoginReq(username, password))) {
+                is NetworkResult.Success -> {
+                    _uiState.value = LoginUiState.Success
+                }
+
+                is NetworkResult.Error -> {
+                    _uiState.value = LoginUiState.Error(result.message)
+                    delay(3.seconds)
+                    _uiState.value = LoginUiState.Initial
+                }
             }
         }
     }
