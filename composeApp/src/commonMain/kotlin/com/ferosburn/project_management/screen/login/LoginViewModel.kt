@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.ferosburn.project_management.models.auth.AuthLoginReq
 import com.ferosburn.project_management.network.AuthApi
 import com.ferosburn.project_management.network.NetworkResult
+import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +56,10 @@ class LoginViewModel : ViewModel() {
             _uiState.value = LoginUiState.Loading
             when (val result = AuthApi.login(AuthLoginReq(username, password))) {
                 is NetworkResult.Success -> {
+                    result.data.data?.let {
+                        LocalStorage.saveAccessToken(it.accessToken)
+                        LocalStorage.saveRefreshToken(it.refreshToken)
+                    }
                     _uiState.value = LoginUiState.Success
                 }
 

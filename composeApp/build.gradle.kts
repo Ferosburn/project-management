@@ -62,6 +62,8 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.russwolf.multiplatform.setting)
+            implementation(libs.russwolf.multiplatform.setting.noarg)
             implementation(projects.shared)
         }
         commonTest.dependencies {
