@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.*
+import com.ferosburn.project_management.screen.login.LoginScreen
 
 @Composable
 internal fun NavHost(
@@ -54,7 +55,7 @@ private fun EntryProviderScope<AppRoute>.screens(
 ) {
     entry<LoginScreen> {
         LoginScreen(
-            onLoginClicked = { navigator.set(DashboardScreen) },
+            onLoginSuccess = { navigator.set(DashboardScreen) },
         )
     }
     entry<DashboardScreen> {

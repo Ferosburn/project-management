@@ -1,38 +1,21 @@
 package com.ferosburn.project_management.navigation
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.AnimationConstants
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.outlined.Assignment
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.DeveloperBoard
-import androidx.compose.material.icons.filled.Engineering
-import androidx.compose.material.icons.filled.LogoDev
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.DeveloperBoard
 import androidx.compose.material.icons.outlined.Engineering
 import androidx.compose.material.icons.outlined.LogoDev
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.VerticalDivider
@@ -41,11 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.ferosburn.project_management.component.navigation.MainNavigationBar
 import com.ferosburn.project_management.component.navigation.MainNavigationItem
 import com.ferosburn.project_management.component.navigation.MainNavigationRail
 import com.ferosburn.project_management.utils.LocalWindowSize
@@ -123,34 +104,33 @@ fun NavScaffold(
                 expanded = windowSize == WindowSize.EXPANDED,
             )
         }
-        Box(Modifier.weight(1f).clipToBounds().pointerInput(showMobileNav) {
-            if (!showMobileNav) return@pointerInput
-            detectHorizontalDragGestures(
-                onHorizontalDrag = { _, dragAmount ->
-                    isMobileNavOpen = if (dragAmount > 50f) true else false
-                }
-            )
-        }) {
+        Box(
+            Modifier.weight(1f).background(Color.LightGray.copy(alpha = 0.4f)).clipToBounds()
+                .pointerInput(showMobileNav) {
+                    if (!showMobileNav) return@pointerInput
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount ->
+                            isMobileNavOpen = if (dragAmount > 50f) true else false
+                        },
+                    )
+                },
+        ) {
             content()
             if (showMobileNav) {
                 IconButton(
-                    onClick = { isMobileNavOpen = true },
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
+                    onClick = { isMobileNavOpen = true }, modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
                 ) {
                     Icon(Icons.Default.Menu, contentDescription = "Open navigation")
                 }
             }
             if (showMobileNav) {
                 MobileNavOverlay(
-                    isOpen = isMobileNavOpen,
-                    currentRoute = navState.topLevelRoute,
+                    isOpen = isMobileNavOpen, currentRoute = navState.topLevelRoute,
                     onSelectRoute = {
                         onSelectRoute(it)
-                        isMobileNavOpen = false  // close after selecting
+                        isMobileNavOpen = false
                     },
-                    onDismiss = { isMobileNavOpen = false }
+                    onDismiss = { isMobileNavOpen = false },
                 )
             }
         }
@@ -170,24 +150,17 @@ fun MobileNavOverlay(
         exit = fadeOut(),
     ) {
         Box(
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onDismiss() }
+            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(
+                indication = null, interactionSource = remember { MutableInteractionSource() }) { onDismiss() },
         )
     }
     AnimatedVisibility(
         visible = isOpen,
         enter = slideInHorizontally(
-            initialOffsetX = { -it },
-            animationSpec = tween(300)
+            initialOffsetX = { -it }, animationSpec = tween(300)
         ),
         exit = slideOutHorizontally(
-            targetOffsetX = { -it },
-            animationSpec = tween(300)
+            targetOffsetX = { -it }, animationSpec = tween(300)
         ),
     ) {
         Box(Modifier.fillMaxHeight().fillMaxWidth(0.75f).background(Color.White)) {
@@ -197,26 +170,6 @@ fun MobileNavOverlay(
                 expanded = true,
             )
         }
-    }
-}
-
-@Composable
-private fun BottomNavigation(
-    currentRoute: MainNavRoute?,
-    /*destinations: List<MainNavigationItem<MainNavRoute>>,*/
-    onSelectRoute: (route: MainNavRoute) -> Unit,
-) {
-    val currentDestination = destinations.find { it.route == currentRoute }
-
-    Column {
-        HorizontalDivider(thickness = 1.dp)
-        MainNavigationBar(
-            currentDestination = currentDestination,
-            destinations = destinations,
-            onSelect = { selectedDestination ->
-                onSelectRoute(selectedDestination.route)
-            },
-        )
     }
 }
 
