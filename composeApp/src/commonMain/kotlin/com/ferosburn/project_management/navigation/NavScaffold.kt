@@ -79,7 +79,7 @@ fun NavScaffold(
     }
     val showLargeNavigation = windowSize != WindowSize.COMPACT && navState.topLevelRoute != null
     val showMobileNav =
-        windowSize == WindowSize.COMPACT && navState.topLevelRoute != null/* && navState.currentBackstack.size == 1 && !isKeyboardOpen()*/
+        windowSize == WindowSize.COMPACT && navState.topLevelRoute != null && navState.currentBackstack.size == 1/* && !isKeyboardOpen()*/
 
 //    NavigationBackHandler(
 //        isBackEnabled = isMobileNavOpen
@@ -118,12 +118,10 @@ fun NavScaffold(
             content()
             if (showMobileNav) {
                 IconButton(
-                    onClick = { isMobileNavOpen = true }, modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                    onClick = { isMobileNavOpen = true }, modifier = Modifier.align(Alignment.TopStart),
                 ) {
                     Icon(Icons.Default.Menu, contentDescription = "Open navigation")
                 }
-            }
-            if (showMobileNav) {
                 MobileNavOverlay(
                     isOpen = isMobileNavOpen, currentRoute = navState.topLevelRoute,
                     onSelectRoute = {

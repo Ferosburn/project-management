@@ -15,7 +15,9 @@ suspend fun <T> safeApiCall(
     return try {
         val token = LocalStorage.readAccessToken() ?: ""
         if (requireAuth && token.isBlank()) return NetworkResult.Error("Access token not set")
-        NetworkResult.Success(apiCall(token))
+        val data = apiCall(token)
+        println(data)
+        NetworkResult.Success(data)
     } catch (e: ClientRequestException) {
         if (e.response.status == HttpStatusCode.Unauthorized && requireAuth) {
             val refreshToken = LocalStorage.readRefreshToken() ?: return NetworkResult.Error("Refresh token not set")
@@ -49,6 +51,7 @@ suspend fun <T> safeApiCall(
             NetworkResult.Error("Server error: ${e.response.status.value}")
         }
     } catch (e: Exception) {
+        println(e.stackTraceToString())
         NetworkResult.Error("Network error: Please check your connection.")
     }
 }

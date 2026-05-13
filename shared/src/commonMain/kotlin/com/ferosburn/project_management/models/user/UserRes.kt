@@ -8,6 +8,6 @@ data class UserRes(
     val name: String,
     val username: String,
     val role: UserRole,
-    val division: UserDivision?,
+    val division: UserDivision? = null,
     val isActive: Boolean,
 )

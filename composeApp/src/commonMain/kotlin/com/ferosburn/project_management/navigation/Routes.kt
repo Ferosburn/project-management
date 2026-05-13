@@ -1,5 +1,6 @@
 package com.ferosburn.project_management.navigation
 
+import com.ferosburn.project_management.models.user.UserRes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -39,6 +40,10 @@ data object ReportsScreen : AppRoute, MainNavRoute
 @Serializable
 @SerialName("Contributors")
 data object ContributorsScreen : AppRoute, MainNavRoute
+
+@Serializable
+@SerialName("ContributorDetail")
+data class ContributorDetailScreen(val user: UserRes) : AppRoute
 
 @Serializable
 @SerialName("Account")
