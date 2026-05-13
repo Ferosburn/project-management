@@ -2,6 +2,7 @@ package com.ferosburn.project_management.network
 
 import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.auth.AuthRefreshTokenReq
+import com.ferosburn.project_management.navigation.NavChannel
 import com.ferosburn.project_management.storage.LocalStorage
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -31,6 +32,7 @@ suspend fun <T> safeApiCall(
 
                 is NetworkResult.Error -> {
                     LocalStorage.deleteTokens()
+                    NavChannel.navigateToLogin()
                     NetworkResult.Error(refresh.message)
                 }
             }

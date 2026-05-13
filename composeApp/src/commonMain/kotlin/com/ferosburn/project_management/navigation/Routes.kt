@@ -17,6 +17,10 @@ sealed interface RootRoute : AppRoute
 data object LoginScreen : AppRoute, RootRoute
 
 @Serializable
+@SerialName("Splash")
+data object SplashScreen : AppRoute, RootRoute
+
+@Serializable
 @SerialName("Dashboard")
 data object DashboardScreen : AppRoute, MainNavRoute
 

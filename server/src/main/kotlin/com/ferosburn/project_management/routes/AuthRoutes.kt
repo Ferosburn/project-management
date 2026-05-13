@@ -38,6 +38,10 @@ fun Route.authRoutes(authRepository: AuthRepository) {
         }
 
         authenticate("jwt") {
+            get("/check-token") {
+                call.respond(HttpStatusCode.OK, ApiResponse.success(null))
+            }
+
             post("/logout") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = Uuid.parse(principal.payload.getClaim("userId").asString())

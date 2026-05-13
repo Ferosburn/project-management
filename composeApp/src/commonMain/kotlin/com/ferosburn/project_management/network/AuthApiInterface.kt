@@ -11,4 +11,5 @@ interface AuthApiInterface {
     suspend fun refreshToken(data: AuthRefreshTokenReq): NetworkResult<ApiResponse<AuthTokenRes>>
     suspend fun logout(): NetworkResult<ApiResponse<Nothing>>
     suspend fun changePassword(data: AuthChangePasswordReq): NetworkResult<ApiResponse<Nothing>>
+    suspend fun checkToken(): NetworkResult<ApiResponse<Nothing>>
 }

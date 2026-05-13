@@ -41,4 +41,10 @@ object AuthApi : AuthApiInterface {
                 setBody(data)
             }.body()
         }
+
+    override suspend fun checkToken(): NetworkResult<ApiResponse<Nothing>> = safeApiCall(true) {
+        client.get("/auth/check-token") {
+            bearerAuth(it)
+        }.body()
+    }
 }
