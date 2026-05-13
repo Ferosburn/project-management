@@ -3,8 +3,11 @@
 package com.ferosburn.project_management.utils
 
 import com.ferosburn.project_management.models.ApiResponse
+import com.ferosburn.project_management.models.user.UserRole
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.response.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -20,4 +23,19 @@ suspend fun ApplicationCall.getUuidParameter(name: String): Uuid? {
         respond(HttpStatusCode.BadRequest, ApiResponse.badRequest(listOf("$name is not valid")))
         null
     }
+}
+
+suspend fun ApplicationCall.checkRole(vararg allowedRoles: UserRole): Boolean {
+    val principal = principal<JWTPrincipal>()!!
+    val role = runCatching {
+        principal.payload.getClaim("role").asString().let { UserRole.valueOf(it) }
+    }.getOrNull() ?: run {
+        respond(HttpStatusCode.Forbidden, ApiResponse.forbidden())
+        return false
+    }
+    if (role !in allowedRoles) {
+        respond(HttpStatusCode.Forbidden, ApiResponse.forbidden())
+        return false
+    }
+    return true
 }
