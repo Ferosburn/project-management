@@ -7,19 +7,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.ferosburn.project_management.component.scaffold.AppScaffold
-import com.ferosburn.project_management.models.user.UserRes
 
 @Composable
 fun ContributorsScreen(
-    onUserClick: (user: UserRes) -> Unit,
+    onUserClick: (userId: String) -> Unit,
 ) {
     val viewModel = remember { ContributorsViewModel() }
     val state by viewModel.uiState.collectAsState()
@@ -57,7 +52,7 @@ fun ContributorsScreen(
                 val users = (state as ContributorsUiState.Success).data
                 LazyColumn {
                     items(users) { user ->
-                        Text(user.name, Modifier.clickable(onClick = { onUserClick(user) }))
+                        Text(user.name, Modifier.clickable(onClick = { onUserClick(user.id) }))
                     }
                 }
             }

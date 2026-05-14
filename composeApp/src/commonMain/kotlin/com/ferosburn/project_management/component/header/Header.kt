@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
@@ -24,7 +25,7 @@ fun Header(
     modifier: Modifier = Modifier,
 ) {
     Column {
-        Box(modifier.fillMaxWidth().background(Color.White)) {
+        Box(modifier.height(48.dp).fillMaxWidth().background(Color.White)) {
             if (showBackButton) {
                 IconButton(
                     onBack, modifier.align(Alignment.CenterStart)

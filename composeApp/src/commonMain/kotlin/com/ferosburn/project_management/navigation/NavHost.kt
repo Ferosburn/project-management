@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.*
 import com.ferosburn.project_management.screen.account.AccountScreen
+import com.ferosburn.project_management.screen.contributor_detail.ContributorDetailScreen
 import com.ferosburn.project_management.screen.contributors.ContributorsScreen
 import com.ferosburn.project_management.screen.login.LoginScreen
 import com.ferosburn.project_management.screen.splash.SplashScreen
@@ -97,7 +98,7 @@ private fun EntryProviderScope<AppRoute>.screens(
     }
     entry<ContributorDetailScreen> {
         ContributorDetailScreen(
-            user = it.user,
+            userId = it.userId,
             onBack = onBack,
         )
     }

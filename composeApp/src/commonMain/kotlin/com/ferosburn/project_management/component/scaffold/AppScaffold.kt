@@ -27,7 +27,7 @@ fun AppScaffold(
     val scrollState = rememberScrollState()
     val windowSize = LocalWindowSize.current
     val unifiedContent = @Composable {
-        Column(Modifier.scrollable(scrollState, Orientation.Vertical).fillMaxSize().padding(20.dp)) {
+        Column(Modifier.scrollable(scrollState, Orientation.Vertical).fillMaxSize()) {
             mainContent()
             sideContent()
         }
@@ -59,7 +59,7 @@ fun AppScaffold(
         }
 
         EXPANDED -> {
-            Row {
+            Row(Modifier.fillMaxSize()) {
                 if (showBackButton) {
                     IconButton(
                         onBack, Modifier.align(Alignment.Top)
