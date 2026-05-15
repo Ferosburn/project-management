@@ -48,11 +48,11 @@ fun Route.userRoutes(userRepository: UserRepository) {
                     )
                     call.respond(HttpStatusCode.OK, ApiResponse.success(user))
                 }
-                put {
-                    if (!call.checkRole(UserRole.SUPERADMIN)) return@put
-                    val uuid = call.getUuidParameter("id") ?: return@put
+                patch {
+                    if (!call.checkRole(UserRole.SUPERADMIN)) return@patch
+                    val uuid = call.getUuidParameter("id") ?: return@patch
                     val req = call.receive<UserUpdateReq>()
-                    val updatedUser = userRepository.update(uuid, req) ?: return@put call.respond(
+                    val updatedUser = userRepository.update(uuid, req) ?: return@patch call.respond(
                         HttpStatusCode.NotFound, ApiResponse.notFound()
                     )
                     call.respond(HttpStatusCode.OK, ApiResponse.success(updatedUser))

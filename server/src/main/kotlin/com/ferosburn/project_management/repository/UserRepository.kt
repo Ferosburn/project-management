@@ -3,16 +3,12 @@
 package com.ferosburn.project_management.repository
 
 import com.ferosburn.project_management.models.UsersTable
-import com.ferosburn.project_management.models.user.UserCreateReq
-import com.ferosburn.project_management.models.user.UserDivision
-import com.ferosburn.project_management.models.user.UserFilter
-import com.ferosburn.project_management.models.user.UserRes
-import com.ferosburn.project_management.models.user.UserRole
-import com.ferosburn.project_management.models.user.UserUpdateReq
+import com.ferosburn.project_management.models.user.*
 import com.ferosburn.project_management.utils.BadRequestException
 import com.ferosburn.project_management.utils.InternalServerException
 import com.ferosburn.project_management.utils.PasswordUtils
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -38,6 +34,7 @@ class UserRepository : UserRepositoryInterface {
             filter.isActive?.let { andWhere { UsersTable.isActive eq it } }
             limit(filter.limit)
             offset(((filter.page - 1) * filter.limit).toLong())
+            orderBy(UsersTable.name to SortOrder.ASC)
         }.map { mapToUserRes(it) }
     }
 
