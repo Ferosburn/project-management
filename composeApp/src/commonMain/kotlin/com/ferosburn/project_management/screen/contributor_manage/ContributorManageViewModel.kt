@@ -5,9 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ferosburn.project_management.models.user.UserCreateReq
-import com.ferosburn.project_management.models.user.UserDivision
-import com.ferosburn.project_management.models.user.UserRole
+import com.ferosburn.project_management.models.user.*
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.UserApi
 import kotlinx.coroutines.delay
@@ -32,13 +30,20 @@ class ContributorManageViewModel : ViewModel() {
     var roleDropdownExpanded by mutableStateOf(false)
     var divisionDropdownExpanded by mutableStateOf(false)
 
-    private fun validateForm(): Boolean {
+    fun fillForm(user: UserRes) {
+        name = user.name
+        username = user.username
+        role = user.role
+        if (user.role == UserRole.DEVELOPER) division = user.division
+    }
+
+    private fun validateForm(isEdit: Boolean = false): Boolean {
         nameError = when {
             name.isBlank() -> "name is required"
             else -> null
         }
         usernameError = when {
-            username.isBlank() -> "username is required"
+            !isEdit && username.isBlank() -> "username is required"
             else -> null
         }
         roleError = when {
@@ -95,6 +100,29 @@ class ContributorManageViewModel : ViewModel() {
                     role = role?.name,
                     division = division?.name,
                 )
+            )
+            when (response) {
+                is NetworkResult.Success -> _uiState.value = ContributorManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ContributorManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ContributorManageUiState.Initial
+                }
+            }
+        }
+    }
+
+    fun updateUser(userId: String) {
+        if (!validateForm(true)) return
+        viewModelScope.launch {
+            _uiState.value = ContributorManageUiState.Loading
+            val response = UserApi.updateUser(
+                userId = userId,
+                data = UserUpdateReq(
+                    name = name,
+                    role = role?.name,
+                    division = division?.name,
+                ),
             )
             when (response) {
                 is NetworkResult.Success -> _uiState.value = ContributorManageUiState.Success

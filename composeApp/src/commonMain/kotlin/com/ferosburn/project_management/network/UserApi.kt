@@ -4,11 +4,11 @@ import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.user.UserCreateReq
 import com.ferosburn.project_management.models.user.UserFilter
 import com.ferosburn.project_management.models.user.UserRes
+import com.ferosburn.project_management.models.user.UserUpdateReq
 import com.ferosburn.project_management.utils.setQueryParams
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import io.ktor.http.*
 
 object UserApi : UserApiInterface {
     private val client = KtorClient.client
@@ -37,14 +37,18 @@ object UserApi : UserApiInterface {
             }.body()
         }
 
-    /*override suspend fun updateUser(
+    override suspend fun updateUser(
         userId: String,
         data: UserUpdateReq,
-    ): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) {
-        TODO("Not yet implemented")
+    ): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) { token ->
+        client.patch("/users/$userId") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(data)
+        }.body()
     }
 
-    override suspend fun deleteUser(userId: String): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) {
+    /*override suspend fun deleteUser(userId: String): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) {
         TODO("Not yet implemented")
     }*/
 

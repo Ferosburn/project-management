@@ -35,6 +35,10 @@ fun ContributorManageScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
 
+    LaunchedEffect(Unit) {
+        if (user != null) viewModel.fillForm(user)
+    }
+
     LaunchedEffect(state) {
         if (state is ContributorManageUiState.Success) {
             onBack()
@@ -43,7 +47,7 @@ fun ContributorManageScreen(
 
     Box(
         Modifier.clearFocusOnTap(),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter,
     ) {
         AppScaffold(
             title = if (user != null) "Edit" else "Add",
@@ -51,7 +55,7 @@ fun ContributorManageScreen(
             sideContent = {
                 Button(
                     modifier = Modifier.padding(20.dp),
-                    onClick = { viewModel.createUser() },
+                    onClick = { if (user != null) viewModel.updateUser(user.id) else viewModel.createUser() },
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text("Save", fontSize = 14.sp)
@@ -84,6 +88,7 @@ fun ContributorManageScreen(
                     },
                     isError = !viewModel.usernameError.isNullOrBlank(),
                     singleLine = true,
+                    enabled = user == null,
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(fontSize = 12.sp),
                 )
@@ -184,8 +189,7 @@ fun ContributorManageScreen(
             exit = slideOutVertically(),
         ) {
             Box(
-                Modifier.padding(top = 20.dp).widthIn(max = 400.dp)
-                    .shadow(10.dp, shape = RoundedCornerShape(12.dp))
+                Modifier.padding(top = 20.dp).widthIn(max = 400.dp).shadow(10.dp, shape = RoundedCornerShape(12.dp))
                     .background(Color.Red, shape = RoundedCornerShape(20.dp)).padding(12.dp),
             ) {
                 val errorMessage = (state as? ContributorManageUiState.Failed)?.message ?: ""
