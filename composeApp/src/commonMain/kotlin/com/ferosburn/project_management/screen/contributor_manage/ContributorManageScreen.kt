@@ -2,6 +2,7 @@ package com.ferosburn.project_management.screen.contributor_manage
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -19,11 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ferosburn.project_management.component.misc.SimpleCountDown
 import com.ferosburn.project_management.component.scaffold.AppScaffold
 import com.ferosburn.project_management.component.utils.clearFocusOnTap
 import com.ferosburn.project_management.models.user.UserDivision
 import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.models.user.UserRole
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +58,6 @@ fun ContributorManageScreen(
             sideContent = {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
-                        modifier = Modifier,
                         onClick = { if (user != null) viewModel.updateUser(user.id) else viewModel.createUser() },
                         shape = RoundedCornerShape(12.dp),
                     ) {
@@ -63,11 +65,19 @@ fun ContributorManageScreen(
                     }
                     if (user != null) {
                         Button(
-                            modifier = Modifier,
                             onClick = { viewModel.updateStatus(user.id, user.isActive) },
                             shape = RoundedCornerShape(12.dp),
                         ) {
                             Text(if (user.isActive) "Deactivate User" else "Activate User", fontSize = 14.sp)
+                        }
+                        Button(
+                            onClick = { viewModel.showDeleteDialog = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red, contentColor = Color.White
+                            )
+                        ) {
+                            Text("Delete User", fontSize = 14.sp)
                         }
                     }
                 }
@@ -221,6 +231,65 @@ fun ContributorManageScreen(
             contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator()
+        }
+
+        if (viewModel.showDeleteDialog && user != null) Box(
+            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(onClick = {
+                viewModel.showDeleteDialog = false
+                viewModel.countDownFinished = false
+            }),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
+                    .shadow(10.dp, shape = RoundedCornerShape(10.dp))
+                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "Delete User Permanently?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Text("You can not reverse this action!")
+                Spacer(modifier = Modifier.height(20.dp))
+                Row {
+                    Button(
+                        onClick = {
+                            viewModel.showDeleteDialog = false
+                            viewModel.countDownFinished = false
+                            viewModel.deleteUser(user.id)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = viewModel.countDownFinished,
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.LightGray,
+                            disabledContentColor = Color.Gray,
+                        )
+                    ) {
+                        if (viewModel.countDownFinished) {
+                            Text("Delete", fontSize = 14.sp)
+                        } else {
+                            SimpleCountDown(10.seconds, onFinish = { viewModel.countDownFinished = true })
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(
+                        onClick = {
+                            viewModel.showDeleteDialog = false
+                            viewModel.countDownFinished = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Cancel", fontSize = 14.sp)
+                    }
+                }
+            }
         }
     }
 }

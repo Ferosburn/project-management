@@ -29,6 +29,8 @@ class ContributorManageViewModel : ViewModel() {
 
     var roleDropdownExpanded by mutableStateOf(false)
     var divisionDropdownExpanded by mutableStateOf(false)
+    var showDeleteDialog by mutableStateOf(false)
+    var countDownFinished by mutableStateOf(false)
 
     fun fillForm(user: UserRes) {
         name = user.name
@@ -145,6 +147,20 @@ class ContributorManageViewModel : ViewModel() {
                 ),
             )
             when (response) {
+                is NetworkResult.Success -> _uiState.value = ContributorManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ContributorManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ContributorManageUiState.Initial
+                }
+            }
+        }
+    }
+
+    fun deleteUser(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = ContributorManageUiState.Loading
+            when (val response = UserApi.deleteUser(userId = userId)) {
                 is NetworkResult.Success -> _uiState.value = ContributorManageUiState.Success
                 is NetworkResult.Error -> {
                     _uiState.value = ContributorManageUiState.Failed(response.message)

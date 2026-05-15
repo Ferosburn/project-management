@@ -48,8 +48,10 @@ object UserApi : UserApiInterface {
         }.body()
     }
 
-    /*override suspend fun deleteUser(userId: String): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) {
-        TODO("Not yet implemented")
-    }*/
+    override suspend fun deleteUser(userId: String): NetworkResult<ApiResponse<UserRes>> = safeApiCall(true) { token ->
+        client.delete("/users/$userId") {
+            bearerAuth(token)
+        }.body()
+    }
 
 }
