@@ -10,8 +10,10 @@ class Navigator(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_LATEST,
     )
+    /*private val _results = MutableSharedFlow<Any>(extraBufferCapacity = 1)
+    val results = _results.asSharedFlow()*/
 
-    fun goBack() {
+    fun goBack(/*result: Any? = null*/) {
         val currentBackstack = state.currentBackstack
 
         if (state.topLevelRoute == null) {
@@ -29,6 +31,7 @@ class Navigator(
             }*/
         } else if (currentBackstack.size > 1) {
             currentBackstack.removeLastOrNull()
+            /*result?.let { _results.tryEmit(it) }*/
         }
     }
 
@@ -67,3 +70,12 @@ class Navigator(
         state.topLevelRoute = route
     }
 }
+
+//@Composable
+//inline fun <reified T> Navigator.OnResult(crossinline onResult: (T) -> Unit) {
+//    LaunchedEffect(Unit) {
+//        results.collect { result ->
+//            if (result is T) onResult(result)
+//        }
+//    }
+//}

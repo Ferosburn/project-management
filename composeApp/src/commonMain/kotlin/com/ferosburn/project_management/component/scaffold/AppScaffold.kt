@@ -21,6 +21,8 @@ fun AppScaffold(
     title: String,
     onBack: () -> Unit = {},
     showBackButton: Boolean = true,
+    sideContentOnTop: Boolean = false,
+    modifier: Modifier = Modifier,
     sideContent: @Composable ColumnScope.() -> Unit = {},
     mainContent: @Composable ColumnScope.() -> Unit,
 ) {
@@ -28,26 +30,31 @@ fun AppScaffold(
     val windowSize = LocalWindowSize.current
     val unifiedContent = @Composable {
         Column(Modifier.scrollable(scrollState, Orientation.Vertical).fillMaxSize()) {
-            mainContent()
-            sideContent()
+            if (sideContentOnTop) {
+                sideContent()
+                mainContent()
+            } else {
+                mainContent()
+                sideContent()
+            }
         }
     }
 
     when (windowSize) {
         COMPACT -> {
-            Column {
+            Column(modifier.fillMaxSize()) {
                 Header(title, showBackButton, onBack)
                 unifiedContent()
             }
         }
 
         MEDIUM -> {
-            Row(Modifier.fillMaxSize()) {
+            Row(modifier.fillMaxSize()) {
                 Spacer(modifier = Modifier.weight(1f))
                 Row(Modifier.widthIn(max = 600.dp)) {
                     if (showBackButton) {
                         IconButton(
-                            onBack, Modifier.align(Alignment.Top)
+                            onBack, Modifier.align(Alignment.Top).padding(12.dp)
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                         }
@@ -59,10 +66,10 @@ fun AppScaffold(
         }
 
         EXPANDED -> {
-            Row(Modifier.fillMaxSize()) {
+            Row(modifier.fillMaxSize()) {
                 if (showBackButton) {
                     IconButton(
-                        onBack, Modifier.align(Alignment.Top)
+                        onBack, Modifier.align(Alignment.Top).padding(12.dp)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
