@@ -71,7 +71,14 @@ fun ContributorsScreen(
 
             is ContributorsUiState.Success -> {
                 val users = (state as ContributorsUiState.Success).data
-                LazyColumn(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (users.isEmpty()) Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "No Data",
+                    )
+                } else LazyColumn(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(users) { user ->
                         Row(
                             Modifier.clickable(onClick = { onUserClick(user.id) }),
