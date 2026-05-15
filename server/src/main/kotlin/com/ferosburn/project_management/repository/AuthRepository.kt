@@ -47,8 +47,7 @@ class AuthRepository : AuthRepositoryInterface {
             it[expiresAt] = System.currentTimeMillis() + refreshExpiry * 1000
             it[createdAt] = System.currentTimeMillis()
         }
-
-        AuthTokenRes(accessToken, refreshToken)
+        AuthTokenRes(accessToken, refreshToken, role)
     }
 
     override fun refreshToken(data: AuthRefreshTokenReq): AuthTokenRes? = transaction {
@@ -60,7 +59,7 @@ class AuthRepository : AuthRepositoryInterface {
         if (!user[UsersTable.isActive]) return@transaction null
         val role = user[UsersTable.role]
         val newAccessToken = JWTUtils.generateAccessToken(userId, role)
-        AuthTokenRes(newAccessToken, data.refreshToken)
+        AuthTokenRes(newAccessToken, data.refreshToken, role)
     }
 
     override fun logout(userId: Uuid): Boolean = transaction {
