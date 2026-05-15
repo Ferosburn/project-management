@@ -53,12 +53,23 @@ fun ContributorManageScreen(
             title = if (user != null) "Edit" else "Add",
             onBack = onBack,
             sideContent = {
-                Button(
-                    modifier = Modifier.padding(20.dp),
-                    onClick = { if (user != null) viewModel.updateUser(user.id) else viewModel.createUser() },
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text("Save", fontSize = 14.sp)
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        modifier = Modifier,
+                        onClick = { if (user != null) viewModel.updateUser(user.id) else viewModel.createUser() },
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Save", fontSize = 14.sp)
+                    }
+                    if (user != null) {
+                        Button(
+                            modifier = Modifier,
+                            onClick = { viewModel.updateStatus(user.id, user.isActive) },
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text(if (user.isActive) "Deactivate User" else "Activate User", fontSize = 14.sp)
+                        }
+                    }
                 }
             },
         ) {

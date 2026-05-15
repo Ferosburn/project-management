@@ -134,4 +134,24 @@ class ContributorManageViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateStatus(userId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = ContributorManageUiState.Loading
+            val response = UserApi.updateUser(
+                userId = userId,
+                data = UserUpdateReq(
+                    isActive = !currentStatus,
+                ),
+            )
+            when (response) {
+                is NetworkResult.Success -> _uiState.value = ContributorManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ContributorManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ContributorManageUiState.Initial
+                }
+            }
+        }
+    }
 }

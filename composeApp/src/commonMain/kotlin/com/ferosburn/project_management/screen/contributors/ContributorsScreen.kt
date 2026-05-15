@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ferosburn.project_management.component.scaffold.AppScaffold
@@ -75,13 +77,15 @@ fun ContributorsScreen(
                             Modifier.clickable(onClick = { onUserClick(user.id) }),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(user.name)
-                            Spacer(Modifier.weight(1f))
-                            IconButton(
-                                onClick = { navigateToManageUser(user) },
-                            ) {
-                                Icon(Icons.Filled.Edit, null)
-                            }
+                            Text(user.name, Modifier.weight(1f).align(Alignment.CenterVertically))
+                            Text(if (user.isActive) "Active" else "Inactive")
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                Icons.Filled.Edit,
+                                null,
+                                Modifier.clip(CircleShape).clickable(onClick = { navigateToManageUser(user) })
+                                    .padding(8.dp)
+                            )
                         }
                     }
                 }
