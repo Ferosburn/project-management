@@ -6,13 +6,16 @@ import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.user.*
 import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.checkRole
+import com.ferosburn.project_management.utils.checkUserEligibility
 import com.ferosburn.project_management.utils.getUuidParameter
 import io.ktor.http.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
 fun Route.userRoutes(userRepository: UserRepository) {
@@ -26,7 +29,10 @@ fun Route.userRoutes(userRepository: UserRepository) {
                     division = call.request.queryParameters["division"]?.let { UserDivision.valueOf(it) },
                     isActive = call.request.queryParameters["isActive"]?.toBooleanStrictOrNull(),
                 )
-                val users = userRepository.getAll(filter)
+                val principal = call.principal<JWTPrincipal>()!!
+                val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
+                val role = principal.payload.getClaim("role").asString().let { UserRole.valueOf(it) }
+                val users = userRepository.getAll(filter, role, userId)
                 call.respond(HttpStatusCode.OK, ApiResponse.success(users))
             }
             post {
@@ -51,6 +57,7 @@ fun Route.userRoutes(userRepository: UserRepository) {
                 patch {
                     if (!call.checkRole(UserRole.SUPERADMIN)) return@patch
                     val uuid = call.getUuidParameter("id") ?: return@patch
+                    if (!call.checkUserEligibility(uuid)) return@patch
                     val req = call.receive<UserUpdateReq>()
                     val updatedUser = userRepository.update(uuid, req) ?: return@patch call.respond(
                         HttpStatusCode.NotFound, ApiResponse.notFound()
@@ -60,6 +67,7 @@ fun Route.userRoutes(userRepository: UserRepository) {
                 delete {
                     if (!call.checkRole(UserRole.SUPERADMIN)) return@delete
                     val uuid = call.getUuidParameter("id") ?: return@delete
+                    if (!call.checkUserEligibility(uuid)) return@delete
                     val deletedUser = userRepository.delete(uuid) ?: return@delete call.respond(
                         HttpStatusCode.NotFound, ApiResponse.notFound()
                     )

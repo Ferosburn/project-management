@@ -10,6 +10,7 @@ import com.ferosburn.project_management.utils.PasswordUtils
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
@@ -27,8 +28,12 @@ class UserRepository : UserRepositoryInterface {
         )
     }
 
-    override fun getAll(filter: UserFilter): List<UserRes> = transaction {
+    override fun getAll(filter: UserFilter, userRole: UserRole, userId: Uuid): List<UserRes> = transaction {
         UsersTable.selectAll().apply {
+            when (userRole) {
+                UserRole.SUPERADMIN -> andWhere { UsersTable.id neq userId }
+                else -> andWhere { UsersTable.role neq UserRole.SUPERADMIN }
+            }
             filter.role?.let { andWhere { UsersTable.role eq it } }
             filter.division?.let { andWhere { UsersTable.division eq it } }
             filter.isActive?.let { andWhere { UsersTable.isActive eq it } }
