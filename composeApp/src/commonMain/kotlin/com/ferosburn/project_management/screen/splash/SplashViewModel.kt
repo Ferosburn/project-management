@@ -26,6 +26,7 @@ class SplashViewModel : ViewModel() {
                     refresh.data.data?.let {
                         LocalStorage.saveAccessToken(it.accessToken)
                         LocalStorage.saveRefreshToken(it.refreshToken)
+                        LocalStorage.saveUserRole(it.role)
                     }
                     _uiState.value = SplashUiState.Success
                 }

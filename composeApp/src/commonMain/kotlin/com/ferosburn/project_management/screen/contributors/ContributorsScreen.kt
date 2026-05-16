@@ -38,13 +38,15 @@ fun ContributorsScreen(
         showBackButton = false,
         sideContentOnTop = true,
         sideContent = {
-            Button(
-                onClick = { navigateToManageUser(null) },
-                Modifier.align(if (windowSize == WindowSize.EXPANDED) Alignment.Start else Alignment.End)
-                    .padding(20.dp),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text("Add Contributor", fontSize = 14.sp)
+            if (viewModel.isSuperAdmin) {
+                Button(
+                    onClick = { navigateToManageUser(null) },
+                    Modifier.align(if (windowSize == WindowSize.EXPANDED) Alignment.Start else Alignment.End)
+                        .padding(20.dp),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text("Add Contributor", fontSize = 14.sp)
+                }
             }
         },
     ) {
@@ -86,13 +88,15 @@ fun ContributorsScreen(
                         ) {
                             Text(user.name, Modifier.weight(1f).align(Alignment.CenterVertically))
                             Text(if (user.isActive) "Active" else "Inactive")
-                            Spacer(Modifier.width(8.dp))
-                            Icon(
-                                Icons.Filled.Edit,
-                                null,
-                                Modifier.clip(CircleShape).clickable(onClick = { navigateToManageUser(user) })
-                                    .padding(8.dp)
-                            )
+                            if (viewModel.isSuperAdmin) {
+                                Spacer(Modifier.width(8.dp))
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    null,
+                                    Modifier.clip(CircleShape).clickable(onClick = { navigateToManageUser(user) })
+                                        .padding(8.dp)
+                                )
+                            }
                         }
                     }
                 }

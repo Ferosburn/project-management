@@ -3,8 +3,10 @@ package com.ferosburn.project_management.screen.contributors
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferosburn.project_management.models.user.UserFilter
+import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.UserApi
+import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -12,6 +14,8 @@ import kotlinx.coroutines.launch
 class ContributorsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<ContributorsUiState>(ContributorsUiState.Loading)
     val uiState = _uiState.asStateFlow()
+    val currentRole = LocalStorage.readUserRole()
+    val isSuperAdmin = currentRole != null && currentRole == UserRole.SUPERADMIN
 
     fun getAllUsers(filter: UserFilter = UserFilter()) {
         viewModelScope.launch {

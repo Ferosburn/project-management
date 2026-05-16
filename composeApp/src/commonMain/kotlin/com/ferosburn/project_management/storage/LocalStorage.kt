@@ -1,10 +1,12 @@
 package com.ferosburn.project_management.storage
 
+import com.ferosburn.project_management.models.user.UserRole
 import com.russhwolf.settings.Settings
 
 object LocalStorage : LocalStorageInterface {
     private const val ACCESS_TOKEN_KEY = "ACCESS_TOKEN"
     private const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN"
+    private const val USER_ROLE_KEY = "USER_ROLE"
     private val settings: Settings = Settings()
 
     override fun saveAccessToken(token: String) = settings.putString(ACCESS_TOKEN_KEY, token)
@@ -23,6 +25,15 @@ object LocalStorage : LocalStorageInterface {
         deleteAccessToken()
         deleteRefreshToken()
     }
+
+    override fun saveUserRole(role: UserRole) = settings.putString(USER_ROLE_KEY, role.name)
+
+    override fun readUserRole(): UserRole? {
+        val roleString = settings.getStringOrNull(USER_ROLE_KEY)
+        return runCatching { roleString?.let { UserRole.valueOf(it) } }.getOrNull()
+    }
+
+    override fun deleteUserRole() = settings.remove(USER_ROLE_KEY)
 
     override fun deleteAll() = settings.clear()
 }

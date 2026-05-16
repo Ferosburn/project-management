@@ -26,6 +26,7 @@ suspend fun <T> safeApiCall(
                     refresh.data.data?.let {
                         LocalStorage.saveAccessToken(it.accessToken)
                         LocalStorage.saveRefreshToken(it.refreshToken)
+                        LocalStorage.saveUserRole(it.role)
                     }
                     val accessToken =
                         LocalStorage.readAccessToken() ?: return NetworkResult.Error("Access token not set")
