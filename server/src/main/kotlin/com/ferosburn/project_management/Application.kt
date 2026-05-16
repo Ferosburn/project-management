@@ -1,11 +1,13 @@
 package com.ferosburn.project_management
 
+import com.ferosburn.project_management.plugins.configureCORS
 import com.ferosburn.project_management.plugins.configureRouting
 import com.ferosburn.project_management.plugins.configureSecurity
 import com.ferosburn.project_management.plugins.configureSerialization
 import com.ferosburn.project_management.plugins.configureStatusPages
 import com.ferosburn.project_management.plugins.initDatabase
 import com.ferosburn.project_management.repository.AuthRepository
+import com.ferosburn.project_management.repository.ProjectRepository
 import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.JWTUtils
 import io.ktor.server.application.*
@@ -19,10 +21,12 @@ fun main() {
 fun Application.module() {
     initDatabase()
     JWTUtils.init()
+    configureCORS()
     configureSecurity()
     configureStatusPages()
     configureSerialization()
     val userRepository = UserRepository()
     val authRepository = AuthRepository()
-    configureRouting(userRepository, authRepository)
+    val projectRepository = ProjectRepository()
+    configureRouting(userRepository, authRepository, projectRepository)
 }
