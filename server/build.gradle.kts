@@ -2,20 +2,19 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
-    application
 }
 
 group = "com.ferosburn.project_management"
 version = "1.0.0"
 application {
-    mainClass.set("com.ferosburn.project_management.ApplicationKt")
+    mainClass = "com.ferosburn.project_management.ApplicationKt"
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 dependencies {
-    implementation(projects.shared)
+    api(projects.core)
     implementation(libs.logback)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cors)
