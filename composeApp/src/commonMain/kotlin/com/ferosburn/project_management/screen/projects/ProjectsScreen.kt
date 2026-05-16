@@ -1,4 +1,4 @@
-package com.ferosburn.project_management.screen
+package com.ferosburn.project_management.screen.projects
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

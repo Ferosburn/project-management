@@ -9,7 +9,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.DashboardScreen
 import com.ferosburn.project_management.screen.ProjectDetailScreen
-import com.ferosburn.project_management.screen.ProjectsScreen
+import com.ferosburn.project_management.screen.projects.ProjectsScreen
 import com.ferosburn.project_management.screen.ReportsScreen
 import com.ferosburn.project_management.screen.account.AccountScreen
 import com.ferosburn.project_management.screen.contributor_detail.ContributorDetailScreen
