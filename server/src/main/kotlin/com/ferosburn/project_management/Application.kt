@@ -3,6 +3,7 @@ package com.ferosburn.project_management
 import com.ferosburn.project_management.plugins.*
 import com.ferosburn.project_management.repository.AuthRepository
 import com.ferosburn.project_management.repository.ProjectRepository
+import com.ferosburn.project_management.repository.TaskRepository
 import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.JWTUtils
 import io.ktor.server.application.*
@@ -23,5 +24,6 @@ fun Application.module() {
     val userRepository = UserRepository()
     val authRepository = AuthRepository()
     val projectRepository = ProjectRepository()
-    configureRouting(userRepository, authRepository, projectRepository)
+    val taskRepository = TaskRepository()
+    configureRouting(userRepository, authRepository, projectRepository, taskRepository)
 }

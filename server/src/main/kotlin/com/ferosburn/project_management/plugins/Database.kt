@@ -3,6 +3,7 @@ package com.ferosburn.project_management.plugins
 import com.ferosburn.project_management.database.seedSuperAdmin
 import com.ferosburn.project_management.models.ProjectsTable
 import com.ferosburn.project_management.models.RefreshTokensTable
+import com.ferosburn.project_management.models.TasksTable
 import com.ferosburn.project_management.models.UsersTable
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -22,8 +23,10 @@ fun initDatabase() {
         password = password,
     )
     transaction {
-        SchemaUtils.create(UsersTable, RefreshTokensTable, ProjectsTable)
-        SchemaUtils.addMissingColumnsStatements(UsersTable, RefreshTokensTable, ProjectsTable).also { statements ->
+        SchemaUtils.create(UsersTable, RefreshTokensTable, ProjectsTable, TasksTable)
+        SchemaUtils.addMissingColumnsStatements(
+            UsersTable, RefreshTokensTable, ProjectsTable, TasksTable
+        ).also { statements ->
             if (statements.isNotEmpty()) {
                 println("Applying ${statements.size} migration(s)...")
                 statements.forEach { exec(it) }
