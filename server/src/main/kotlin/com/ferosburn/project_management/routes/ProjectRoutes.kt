@@ -19,7 +19,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.projectRoutes(projectRepository: ProjectRepository) {
     authenticate("jwt") {
-        route("/project") {
+        route("/projects") {
             get {
                 val filter = ProjectFilter(
                     limit = call.request.queryParameters["limit"]?.toInt() ?: 10,
