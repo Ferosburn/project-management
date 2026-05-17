@@ -3,10 +3,13 @@
 package com.ferosburn.project_management.repository
 
 import com.ferosburn.project_management.models.TasksTable
+import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
 import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.utils.InternalServerException
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
@@ -51,5 +54,18 @@ class TaskRepository : TaskRepositoryInterface {
         rootTasks.map { mapToTaskRes(it) }.map { root ->
             root.copy(tasks = buildTaskTree(descendants, root.id))
         }
+    }
+
+    override fun create(projectId: Uuid, data: TaskCreateReq): TaskRes = transaction {
+        val insertStatement = TasksTable.insert { row ->
+            row[id] = Uuid.generateV7()
+            row[TasksTable.projectId] = projectId
+            row[parentId] = data.parentId?.let { runCatching { Uuid.parse(it) }.getOrNull() }
+            row[rootParentId] = data.rootParentId?.let { runCatching { Uuid.parse(it) }.getOrNull() }
+            row[name] = data.name
+            row[description] = data.description
+        }
+        insertStatement.resultedValues?.singleOrNull()?.let { mapToTaskRes(it) }
+            ?: throw InternalServerException("Failed to create task")
     }
 }
