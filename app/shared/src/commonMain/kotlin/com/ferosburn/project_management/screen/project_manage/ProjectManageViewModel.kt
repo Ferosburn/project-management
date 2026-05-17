@@ -23,6 +23,8 @@ class ProjectManageViewModel() : ViewModel() {
     var description by mutableStateOf("")
     var nameError by mutableStateOf<String?>(null)
     var descriptionError by mutableStateOf<String?>(null)
+    var showDeleteDialog by mutableStateOf(false)
+    var countDownFinished by mutableStateOf(false)
 
     fun fillForm(project: ProjectRes) {
         name = project.name
@@ -84,6 +86,40 @@ class ProjectManageViewModel() : ViewModel() {
                 ),
             )
             when (response) {
+                is NetworkResult.Success -> _uiState.value = ProjectManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ProjectManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ProjectManageUiState.Initial
+                }
+            }
+        }
+    }
+
+    fun updateStatus(projectId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = ProjectManageUiState.Loading
+            val response = ProjectApi.updateProject(
+                projectId = projectId,
+                data = ProjectUpdateReq(
+                    isActive = !currentStatus,
+                ),
+            )
+            when (response) {
+                is NetworkResult.Success -> _uiState.value = ProjectManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ProjectManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ProjectManageUiState.Initial
+                }
+            }
+        }
+    }
+
+    fun deleteProject(projectId: String) {
+        viewModelScope.launch {
+            _uiState.value = ProjectManageUiState.Loading
+            when (val response = ProjectApi.deleteProject(projectId)) {
                 is NetworkResult.Success -> _uiState.value = ProjectManageUiState.Success
                 is NetworkResult.Error -> {
                     _uiState.value = ProjectManageUiState.Failed(response.message)

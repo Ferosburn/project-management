@@ -2,9 +2,11 @@ package com.ferosburn.project_management.screen.project_manage
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,9 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ferosburn.project_management.component.misc.SimpleCountDown
 import com.ferosburn.project_management.component.scaffold.AppScaffold
 import com.ferosburn.project_management.component.utils.clearFocusOnTap
 import com.ferosburn.project_management.models.project.ProjectRes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ProjectManageScreen(
@@ -55,6 +59,23 @@ fun ProjectManageScreen(
                         shape = RoundedCornerShape(12.dp),
                     ) {
                         Text("Save", fontSize = 14.sp)
+                    }
+                    if (project != null) {
+                        Button(
+                            onClick = { viewModel.updateStatus(project.id, project.isActive) },
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text(if (project.isActive) "Deactivate Project" else "Activate Project", fontSize = 14.sp)
+                        }
+                        Button(
+                            onClick = { viewModel.showDeleteDialog = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red, contentColor = Color.White
+                            )
+                        ) {
+                            Text("Delete Project", fontSize = 14.sp)
+                        }
                     }
                 }
             },
@@ -119,6 +140,65 @@ fun ProjectManageScreen(
             contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator()
+        }
+
+        if (viewModel.showDeleteDialog && project != null) Box(
+            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(onClick = {
+                viewModel.showDeleteDialog = false
+                viewModel.countDownFinished = false
+            }),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
+                    .shadow(10.dp, shape = RoundedCornerShape(10.dp))
+                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "Delete Project Permanently?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Text("You can not reverse this action!")
+                Spacer(modifier = Modifier.height(20.dp))
+                Row {
+                    Button(
+                        onClick = {
+                            viewModel.showDeleteDialog = false
+                            viewModel.countDownFinished = false
+                            viewModel.deleteProject(project.id)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = viewModel.countDownFinished,
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.LightGray,
+                            disabledContentColor = Color.Gray,
+                        )
+                    ) {
+                        if (viewModel.countDownFinished) {
+                            Text("Delete", fontSize = 14.sp)
+                        } else {
+                            SimpleCountDown(10.seconds, onFinish = { viewModel.countDownFinished = true })
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(
+                        onClick = {
+                            viewModel.showDeleteDialog = false
+                            viewModel.countDownFinished = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Cancel", fontSize = 14.sp)
+                    }
+                }
+            }
         }
     }
 }
