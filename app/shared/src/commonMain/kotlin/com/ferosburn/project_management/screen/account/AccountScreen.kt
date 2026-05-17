@@ -18,13 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AccountScreen(
     onLogoutSuccess: () -> Unit,
 ) {
     val viewModel = remember { AccountViewModel() }
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(state) {
         if (state is AccountUiState.SuccessLogout) {

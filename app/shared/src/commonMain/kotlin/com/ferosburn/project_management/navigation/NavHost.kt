@@ -8,7 +8,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.DashboardScreen
-import com.ferosburn.project_management.screen.ProjectDetailScreen
+import com.ferosburn.project_management.screen.project_detail.ProjectDetailScreen
 import com.ferosburn.project_management.screen.projects.ProjectsScreen
 import com.ferosburn.project_management.screen.ReportsScreen
 import com.ferosburn.project_management.screen.account.AccountScreen
@@ -20,10 +20,8 @@ import com.ferosburn.project_management.screen.splash.SplashScreen
 import kotlinx.coroutines.flow.receiveAsFlow
 
 @Composable
-internal fun NavHost(
-    /*isLoggedIn: Boolean,*/
-) {
-    /*val startRoute = remember { if (isLoggedIn) DashboardScreen else LoginScreen }*/
+internal fun NavHost(/*isLoggedIn: Boolean,*/
+) {/*val startRoute = remember { if (isLoggedIn) DashboardScreen else LoginScreen }*/
     val startRoute = remember { SplashScreen }
     val navState = rememberNavState(
         startRoute = startRoute,
@@ -86,11 +84,14 @@ private fun EntryProviderScope<AppRoute>.screens(
     }
     entry<ProjectsScreen> {
         ProjectsScreen(
-            onProjectClick = { navigator.add(ProjectDetailScreen) },
+            onProjectClick = { navigator.add(ProjectDetailScreen(it)) },
         )
     }
     entry<ProjectDetailScreen> {
-        ProjectDetailScreen()
+        ProjectDetailScreen(
+            projectId = it.projectId,
+            onBack = onBack,
+        )
     }
     entry<ReportsScreen> {
         ReportsScreen()

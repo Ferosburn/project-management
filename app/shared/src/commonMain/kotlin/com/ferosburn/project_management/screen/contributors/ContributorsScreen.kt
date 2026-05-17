@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferosburn.project_management.component.scaffold.AppScaffold
 import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.utils.LocalWindowSize
@@ -26,7 +27,7 @@ fun ContributorsScreen(
     navigateToManageUser: (user: UserRes?) -> Unit,
 ) {
     val viewModel = remember { ContributorsViewModel() }
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSize = LocalWindowSize.current
 
     LaunchedEffect(Unit) {

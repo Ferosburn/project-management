@@ -31,7 +31,7 @@ data object ProjectsScreen : AppRoute, MainNavRoute
 
 @Serializable
 @SerialName("ProjectDetail")
-data object ProjectDetailScreen : AppRoute
+data class ProjectDetailScreen(val projectId: String) : AppRoute
 
 @Serializable
 @SerialName("Reports")
