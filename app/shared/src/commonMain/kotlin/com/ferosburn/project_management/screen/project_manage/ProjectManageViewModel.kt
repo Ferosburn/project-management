@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferosburn.project_management.models.project.ProjectCreateReq
+import com.ferosburn.project_management.models.project.ProjectRes
+import com.ferosburn.project_management.models.project.ProjectUpdateReq
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
 import kotlinx.coroutines.delay
@@ -22,6 +24,23 @@ class ProjectManageViewModel() : ViewModel() {
     var nameError by mutableStateOf<String?>(null)
     var descriptionError by mutableStateOf<String?>(null)
 
+    fun fillForm(project: ProjectRes) {
+        name = project.name
+        description = project.description
+    }
+
+    private fun validateForm(): Boolean {
+        nameError = when {
+            name.isBlank() -> "name is required"
+            else -> null
+        }
+        descriptionError = when {
+            description.isBlank() -> "description is required"
+            else -> null
+        }
+        return listOf(nameError, descriptionError).all { it.isNullOrBlank() }
+    }
+
     fun onNameChange(value: String) {
         name = value
         nameError = null
@@ -33,6 +52,7 @@ class ProjectManageViewModel() : ViewModel() {
     }
 
     fun createProject() {
+        if (!validateForm()) return
         viewModelScope.launch {
             _uiState.value = ProjectManageUiState.Loading
             val response = ProjectApi.createProject(
@@ -40,6 +60,28 @@ class ProjectManageViewModel() : ViewModel() {
                     name = name,
                     description = description,
                 )
+            )
+            when (response) {
+                is NetworkResult.Success -> _uiState.value = ProjectManageUiState.Success
+                is NetworkResult.Error -> {
+                    _uiState.value = ProjectManageUiState.Failed(response.message)
+                    delay(3.seconds)
+                    _uiState.value = ProjectManageUiState.Initial
+                }
+            }
+        }
+    }
+
+    fun updateProject(projectId: String) {
+        if (!validateForm()) return
+        viewModelScope.launch {
+            _uiState.value = ProjectManageUiState.Loading
+            val response = ProjectApi.updateProject(
+                projectId,
+                ProjectUpdateReq(
+                    name = name,
+                    description = description,
+                ),
             )
             when (response) {
                 is NetworkResult.Success -> _uiState.value = ProjectManageUiState.Success

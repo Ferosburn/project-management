@@ -33,6 +33,10 @@ fun ProjectManageScreen(
     val viewModel = remember { ProjectManageViewModel() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        if (project != null) viewModel.fillForm(project)
+    }
+
     LaunchedEffect(state) {
         if (state is ProjectManageUiState.Success) onBack()
     }
@@ -47,7 +51,7 @@ fun ProjectManageScreen(
             sideContent = {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
-                        onClick = { viewModel.createProject() },
+                        onClick = { if (project != null) viewModel.updateProject(project.id) else viewModel.createProject() },
                         shape = RoundedCornerShape(12.dp),
                     ) {
                         Text("Save", fontSize = 14.sp)

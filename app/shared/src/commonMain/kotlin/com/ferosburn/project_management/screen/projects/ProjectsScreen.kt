@@ -97,7 +97,8 @@ fun ProjectsScreen(
                                 Icon(
                                     Icons.Filled.Edit,
                                     null,
-                                    Modifier.clip(CircleShape).clickable(onClick = { }).padding(8.dp)
+                                    Modifier.clip(CircleShape).clickable(onClick = { navigateToManageProject(project) })
+                                        .padding(8.dp)
                                 )
                             }
                         }
