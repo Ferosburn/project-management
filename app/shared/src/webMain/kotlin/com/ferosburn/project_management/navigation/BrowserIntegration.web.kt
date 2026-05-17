@@ -57,8 +57,13 @@ actual fun BrowserIntegration(navState: NavState) {
 
                     ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorManageScreen()
                     SplashScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> SplashScreen
+                    ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectDetailScreen(
+                        params["projectId"] ?: ""
+                    )
+
+                    ProjectManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectManageScreen()
                     else -> null
-                }
+                } as AppRoute?
             },
         )
     }
@@ -88,6 +93,8 @@ private fun AppRoute.toBrowserHistoryFragment() = when (val key = this) {
     is ContributorDetailScreen -> buildBrowserHistoryFragment(ContributorDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     is ContributorManageScreen -> buildBrowserHistoryFragment(ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     SplashScreen -> buildBrowserHistoryFragment(SplashScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    is ProjectDetailScreen -> buildBrowserHistoryFragment(ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    is ProjectManageScreen -> buildBrowserHistoryFragment(ProjectManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
 }
 
 private fun String.fromPascalCaseToSnakeCase(): String {

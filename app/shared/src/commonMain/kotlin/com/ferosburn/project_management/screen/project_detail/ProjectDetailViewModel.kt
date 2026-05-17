@@ -19,7 +19,7 @@ class ProjectDetailViewModel : ViewModel() {
                 is NetworkResult.Error -> _uiState.value = ProjectDetailUiState.Failed(response.message)
                 is NetworkResult.Success -> {
                     response.data.data?.let {
-                        ProjectDetailUiState.Success(it)
+                        _uiState.value = ProjectDetailUiState.Success(it)
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.ferosburn.project_management.navigation
 
+import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.user.UserRes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -32,6 +33,10 @@ data object ProjectsScreen : AppRoute, MainNavRoute
 @Serializable
 @SerialName("ProjectDetail")
 data class ProjectDetailScreen(val projectId: String) : AppRoute
+
+@Serializable
+@SerialName("ProjectManage")
+data class ProjectManageScreen(val project: ProjectRes? = null) : AppRoute
 
 @Serializable
 @SerialName("Reports")

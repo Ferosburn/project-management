@@ -23,8 +23,8 @@ class ProjectsViewModel : ViewModel() {
             when (val response = ProjectApi.getAllProjects(filter)) {
                 is NetworkResult.Error -> _uiState.value = ProjectsUiState.Failed(response.message)
                 is NetworkResult.Success -> {
-                    response.data.data?.let {
-                        _uiState.value = ProjectsUiState.Success(it)
+                    response.data.data.let {
+                        _uiState.value = ProjectsUiState.Success(it ?: emptyList())
                     }
                 }
             }

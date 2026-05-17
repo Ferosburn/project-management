@@ -8,14 +8,15 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.DashboardScreen
-import com.ferosburn.project_management.screen.project_detail.ProjectDetailScreen
-import com.ferosburn.project_management.screen.projects.ProjectsScreen
 import com.ferosburn.project_management.screen.ReportsScreen
 import com.ferosburn.project_management.screen.account.AccountScreen
 import com.ferosburn.project_management.screen.contributor_detail.ContributorDetailScreen
 import com.ferosburn.project_management.screen.contributor_manage.ContributorManageScreen
 import com.ferosburn.project_management.screen.contributors.ContributorsScreen
 import com.ferosburn.project_management.screen.login.LoginScreen
+import com.ferosburn.project_management.screen.project_detail.ProjectDetailScreen
+import com.ferosburn.project_management.screen.project_manage.ProjectManageScreen
+import com.ferosburn.project_management.screen.projects.ProjectsScreen
 import com.ferosburn.project_management.screen.splash.SplashScreen
 import kotlinx.coroutines.flow.receiveAsFlow
 
@@ -85,6 +86,13 @@ private fun EntryProviderScope<AppRoute>.screens(
     entry<ProjectsScreen> {
         ProjectsScreen(
             onProjectClick = { navigator.add(ProjectDetailScreen(it)) },
+            navigateToManageProject = { navigator.add(ProjectManageScreen(it)) },
+        )
+    }
+    entry<ProjectManageScreen> {
+        ProjectManageScreen(
+            project = it.project,
+            onBack = onBack,
         )
     }
     entry<ProjectDetailScreen> {

@@ -6,15 +6,9 @@ import com.ferosburn.project_management.models.project.ProjectFilter
 import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.project.ProjectUpdateReq
 import com.ferosburn.project_management.utils.setQueryParams
-import io.ktor.client.call.body
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.patch
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 
 object ProjectApi : ProjectApiInterface {
     private val client = KtorClient.client

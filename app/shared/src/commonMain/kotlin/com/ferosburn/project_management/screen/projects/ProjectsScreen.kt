@@ -20,12 +20,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferosburn.project_management.component.scaffold.AppScaffold
+import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.utils.LocalWindowSize
 import com.ferosburn.project_management.utils.WindowSize
 
 @Composable
 fun ProjectsScreen(
     onProjectClick: (projectId: String) -> Unit,
+    navigateToManageProject: (project: ProjectRes?) -> Unit,
 ) {
     val viewModel = remember { ProjectsViewModel() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,7 +44,7 @@ fun ProjectsScreen(
         sideContent = {
             if (viewModel.isManager) {
                 Button(
-                    onClick = { },
+                    onClick = { navigateToManageProject(null) },
                     Modifier.align(if (windowSize == WindowSize.EXPANDED) Alignment.Start else Alignment.End)
                         .padding(20.dp),
                     shape = RoundedCornerShape(12.dp),

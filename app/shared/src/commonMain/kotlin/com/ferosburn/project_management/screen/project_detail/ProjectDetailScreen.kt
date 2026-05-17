@@ -26,7 +26,7 @@ fun ProjectDetailScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.getProjectDetail(projectId)
+        viewModel.getProjectDetail(projectId = projectId)
     }
 
     AppScaffold(
@@ -54,13 +54,14 @@ fun ProjectDetailScreen(
                 val project = (state as ProjectDetailUiState.Success).data
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(project.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            Text("id: ${project.id}", color = Color.Gray, fontSize = 10.sp)
+                            Text("id: ${project.id}", color = Color.Gray, fontSize = 10.sp, lineHeight = 10.sp)
                         }
-                        Text(project.isActive.toString())
+                        Spacer(Modifier.width(12.dp))
+                        Text(if (project.isActive) "Active" else "Inactive", color = Color.Gray, fontSize = 14.sp)
                     }
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(project.description, textAlign = TextAlign.Justify)
                 }
             }
