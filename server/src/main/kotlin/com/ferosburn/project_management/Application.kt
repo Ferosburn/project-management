@@ -3,6 +3,7 @@ package com.ferosburn.project_management
 import com.ferosburn.project_management.plugins.*
 import com.ferosburn.project_management.repository.AuthRepository
 import com.ferosburn.project_management.repository.ProjectRepository
+import com.ferosburn.project_management.repository.ReportRepository
 import com.ferosburn.project_management.repository.TaskRepository
 import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.JWTUtils
@@ -25,5 +26,6 @@ fun Application.module() {
     val authRepository = AuthRepository()
     val projectRepository = ProjectRepository()
     val taskRepository = TaskRepository()
-    configureRouting(userRepository, authRepository, projectRepository, taskRepository)
+    val reportRepository = ReportRepository()
+    configureRouting(userRepository, authRepository, projectRepository, taskRepository, reportRepository)
 }
