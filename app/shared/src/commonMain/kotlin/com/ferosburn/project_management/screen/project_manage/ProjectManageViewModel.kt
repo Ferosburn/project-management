@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-class ProjectManageViewModel() : ViewModel() {
+class ProjectManageViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<ProjectManageUiState>(ProjectManageUiState.Initial)
     val uiState = _uiState.asStateFlow()
     var name by mutableStateOf("")

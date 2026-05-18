@@ -46,7 +46,7 @@ fun LoginScreen(
     ) {
         Column(
             Modifier.align(Alignment.Center).padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
-                .shadow(10.dp, shape = RoundedCornerShape(10.dp))
+                .shadow(10.dp, shape = RoundedCornerShape(12.dp))
                 .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

@@ -1,9 +1,29 @@
 package com.ferosburn.project_management.screen.project_detail
 
 import com.ferosburn.project_management.models.project.ProjectRes
+import com.ferosburn.project_management.models.task.TaskRes
 
-sealed interface ProjectDetailUiState {
-    data object Loading : ProjectDetailUiState
-    data class Success(val data: ProjectRes) : ProjectDetailUiState
-    data class Failed(val message: String) : ProjectDetailUiState
+
+data class ProjectDetailUiState(
+    val projectData: ProjectDataUiState = ProjectDataUiState.Loading,
+    val tasks: TasksUiState = TasksUiState.Loading,
+    val taskCreate: TaskCreateUiState = TaskCreateUiState.Initial,
+)
+sealed interface TaskCreateUiState {
+    data object Initial : TaskCreateUiState
+    data object Loading : TaskCreateUiState
+    data object Success : TaskCreateUiState
+    data class Failed(val message: String) : TaskCreateUiState
+}
+
+sealed interface ProjectDataUiState {
+    data object Loading : ProjectDataUiState
+    data class Success(val data: ProjectRes) : ProjectDataUiState
+    data class Failed(val message: String) : ProjectDataUiState
+}
+
+sealed interface TasksUiState {
+    data object Loading : TasksUiState
+    data class Success(val data: List<TaskRes>) : TasksUiState
+    data class Failed(val message: String) : TasksUiState
 }

@@ -1,26 +1,132 @@
 package com.ferosburn.project_management.screen.project_detail
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ferosburn.project_management.models.task.TaskCreateReq
+import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
+import com.ferosburn.project_management.network.TaskApi
+import com.ferosburn.project_management.storage.LocalStorage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 class ProjectDetailViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<ProjectDetailUiState>(ProjectDetailUiState.Loading)
-    val uiState = _uiState.asStateFlow()
+    private val _uiStates = MutableStateFlow(ProjectDetailUiState())
+    val uiStates = _uiStates.asStateFlow()
+    val currentRole = LocalStorage.readUserRole()
+    val isManager = currentRole != null && currentRole == UserRole.MANAGER
+    var name by mutableStateOf("")
+    var description by mutableStateOf("")
+    var nameError by mutableStateOf<String?>(null)
+    var descriptionError by mutableStateOf<String?>(null)
+    var showCreateTaskDialog by mutableStateOf(false)
+    var currentParentId by mutableStateOf<String?>(null)
+    var currentRootParentId by mutableStateOf<String?>(null)
+
+    fun fillForm(task: TaskRes) {
+        name = task.name
+        description = task.description
+    }
+
+    private fun validateForm(): Boolean {
+        nameError = when {
+            name.isBlank() -> "name is required"
+            else -> null
+        }
+        descriptionError = when {
+            description.isBlank() -> "description is required"
+            else -> null
+        }
+        return listOf(nameError, descriptionError).all { it.isNullOrBlank() }
+    }
+
+    fun onNameChange(value: String) {
+        name = value
+        nameError = null
+    }
+
+    fun onDescriptionChange(value: String) {
+        description = value
+        descriptionError = null
+    }
+
+    fun openCreateTaskDialog(parentId: String, rootParentId: String) {
+        showCreateTaskDialog = true
+        currentParentId = parentId
+        currentRootParentId = rootParentId
+    }
+
+    fun closeCreateTaskDialog() {
+        name = ""
+        nameError = null
+        description = ""
+        descriptionError = null
+        showCreateTaskDialog = false
+        currentParentId = null
+        currentRootParentId = null
+    }
 
     fun getProjectDetail(projectId: String) {
         viewModelScope.launch {
-            _uiState.value = ProjectDetailUiState.Loading
+            _uiStates.update { it.copy(projectData = ProjectDataUiState.Loading) }
             when (val response = ProjectApi.getProjectDetail(projectId)) {
-                is NetworkResult.Error -> _uiState.value = ProjectDetailUiState.Failed(response.message)
+                is NetworkResult.Error -> _uiStates.update { it.copy(projectData = ProjectDataUiState.Failed(response.message)) }
                 is NetworkResult.Success -> {
-                    response.data.data?.let {
-                        _uiState.value = ProjectDetailUiState.Success(it)
+                    response.data.data?.let { data ->
+                        _uiStates.update { it.copy(projectData = ProjectDataUiState.Success(data)) }
                     }
+                }
+            }
+        }
+    }
+
+    fun getAllTasks(projectId: String) {
+        viewModelScope.launch {
+            _uiStates.update { it.copy(tasks = TasksUiState.Loading) }
+            when (val response = TaskApi.getAllTasks(projectId)) {
+                is NetworkResult.Error -> _uiStates.update { it.copy(tasks = TasksUiState.Failed(response.message)) }
+                is NetworkResult.Success -> {
+                    response.data.data?.let { data ->
+                        _uiStates.update { it.copy(tasks = TasksUiState.Success(data)) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun createTask(projectId: String) {
+        if (!validateForm()) return
+        viewModelScope.launch {
+            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            val response = TaskApi.createTask(
+                projectId,
+                TaskCreateReq(
+                    name = name,
+                    description = description,
+                    parentId = currentParentId,
+                    rootParentId = currentRootParentId
+                ),
+            )
+            when (response) {
+                is NetworkResult.Success -> {
+                    closeCreateTaskDialog()
+                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Success) }
+                    getAllTasks(projectId)
+                }
+                is NetworkResult.Error -> {
+                    closeCreateTaskDialog()
+                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Failed(response.message)) }
+                    delay(3.seconds)
+                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Initial) }
                 }
             }
         }

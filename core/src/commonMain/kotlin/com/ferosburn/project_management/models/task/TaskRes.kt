@@ -8,7 +8,7 @@ data class TaskRes(
     val name: String,
     val description: String,
     val status: TaskStatus,
-    val parentId: String?,
-    val rootParentId: String?,
+    val parentId: String? = null,
+    val rootParentId: String? = null,
     val tasks: List<TaskRes> = emptyList(),
 )
