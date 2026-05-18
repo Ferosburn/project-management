@@ -5,8 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.models.task.TaskUpdateReq
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
@@ -29,13 +31,12 @@ class ProjectDetailViewModel : ViewModel() {
     var nameError by mutableStateOf<String?>(null)
     var descriptionError by mutableStateOf<String?>(null)
     var showCreateTaskDialog by mutableStateOf(false)
+    var isEditTask by mutableStateOf(false)
+    var currentTaskId by mutableStateOf<String?>(null)
     var currentParentId by mutableStateOf<String?>(null)
     var currentRootParentId by mutableStateOf<String?>(null)
-
-    fun fillForm(task: TaskRes) {
-        name = task.name
-        description = task.description
-    }
+    var showDeleteDialog by mutableStateOf(false)
+    var countDownFinished by mutableStateOf(false)
 
     private fun validateForm(): Boolean {
         nameError = when {
@@ -60,9 +61,18 @@ class ProjectDetailViewModel : ViewModel() {
     }
 
     fun openCreateTaskDialog(parentId: String, rootParentId: String) {
+        isEditTask = false
         showCreateTaskDialog = true
         currentParentId = parentId
         currentRootParentId = rootParentId
+    }
+
+    fun openEditTaskDialog(task: TaskRes) {
+        isEditTask = true
+        showCreateTaskDialog = true
+        name = task.name
+        description = task.description
+        currentTaskId = task.id
     }
 
     fun closeCreateTaskDialog() {
@@ -71,8 +81,41 @@ class ProjectDetailViewModel : ViewModel() {
         description = ""
         descriptionError = null
         showCreateTaskDialog = false
+        currentTaskId = null
         currentParentId = null
         currentRootParentId = null
+    }
+
+    fun openDeleteTaskDialog(taskId: String) {
+        showDeleteDialog = true
+        countDownFinished = false
+        currentTaskId = taskId
+    }
+
+    fun closeDeleteTaskDialog() {
+        showDeleteDialog = false
+        countDownFinished = false
+    }
+
+    suspend fun handleManageTaskState(
+        response: NetworkResult<ApiResponse<TaskRes>>,
+        projectId: String,
+        action: () -> Unit
+    ) {
+        when (response) {
+            is NetworkResult.Success -> {
+                action()
+                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Success) }
+                getAllTasks(projectId)
+            }
+
+            is NetworkResult.Error -> {
+                action()
+                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Failed(response.message)) }
+                delay(3.seconds)
+                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Initial) }
+            }
+        }
     }
 
     fun getProjectDetail(projectId: String) {
@@ -116,19 +159,35 @@ class ProjectDetailViewModel : ViewModel() {
                     rootParentId = currentRootParentId
                 ),
             )
-            when (response) {
-                is NetworkResult.Success -> {
-                    closeCreateTaskDialog()
-                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Success) }
-                    getAllTasks(projectId)
-                }
-                is NetworkResult.Error -> {
-                    closeCreateTaskDialog()
-                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Failed(response.message)) }
-                    delay(3.seconds)
-                    _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Initial) }
-                }
-            }
+            handleManageTaskState(response, projectId, ::closeCreateTaskDialog)
+        }
+    }
+
+    fun updateTask(projectId: String) {
+        if (!validateForm()) return
+        viewModelScope.launch {
+            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            val response = TaskApi.updateTask(
+                projectId,
+                currentTaskId!!,
+                TaskUpdateReq(
+                    name = name,
+                    description = description,
+                ),
+            )
+            handleManageTaskState(response, projectId, ::closeCreateTaskDialog)
+        }
+    }
+
+    fun deleteTask(projectId: String) {
+        closeDeleteTaskDialog()
+        viewModelScope.launch {
+            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            val response = TaskApi.deleteTask(
+                projectId,
+                currentTaskId!!,
+            )
+            handleManageTaskState(response, projectId) { currentTaskId = null }
         }
     }
 }

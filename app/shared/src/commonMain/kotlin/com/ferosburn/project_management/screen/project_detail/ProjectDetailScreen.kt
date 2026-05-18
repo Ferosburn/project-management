@@ -2,6 +2,7 @@ package com.ferosburn.project_management.screen.project_detail
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,9 +26,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ferosburn.project_management.component.misc.SimpleCountDown
 import com.ferosburn.project_management.component.scaffold.AppScaffold
 import com.ferosburn.project_management.component.utils.clearFocusOnTap
 import com.ferosburn.project_management.models.task.TaskRes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ProjectDetailScreen(
@@ -199,7 +202,11 @@ fun ProjectDetailScreen(
                 Row {
                     Button(
                         onClick = {
-                            viewModel.createTask(projectId)
+                            if (viewModel.isEditTask) {
+                                viewModel.updateTask(projectId)
+                            } else {
+                                viewModel.createTask(projectId)
+                            }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
@@ -215,6 +222,60 @@ fun ProjectDetailScreen(
                     Spacer(modifier = Modifier.width(20.dp))
                     Button(
                         onClick = viewModel::closeCreateTaskDialog,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Cancel", fontSize = 14.sp)
+                    }
+                }
+            }
+        }
+
+        if (viewModel.showDeleteDialog) Box(
+            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(
+                onClick = viewModel::closeDeleteTaskDialog
+            ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
+                    .shadow(10.dp, shape = RoundedCornerShape(10.dp))
+                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "Delete Task Permanently?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Text("You can not reverse this action!")
+                Spacer(modifier = Modifier.height(20.dp))
+                Row {
+                    Button(
+                        onClick = {
+                            viewModel.closeDeleteTaskDialog()
+                            viewModel.deleteTask(projectId)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = viewModel.countDownFinished,
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.LightGray,
+                            disabledContentColor = Color.Gray,
+                        )
+                    ) {
+                        if (viewModel.countDownFinished) {
+                            Text("Delete", fontSize = 14.sp)
+                        } else {
+                            SimpleCountDown(10.seconds, onFinish = { viewModel.countDownFinished = true })
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(
+                        onClick = viewModel::closeDeleteTaskDialog,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                     ) {
@@ -249,21 +310,23 @@ fun TaskItem(task: TaskRes, viewModel: ProjectDetailViewModel, modifier: Modifie
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options"
+                        imageVector = Icons.Default.MoreVert, contentDescription = "More options"
                     )
                 }
                 DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Create New Sub-task") },
-                        onClick = {
-                            expanded = false
-                            viewModel.openCreateTaskDialog(task.id, task.rootParentId ?: task.id)
-                        }
-                    )
+                    expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(text = { Text("Create New Sub-task") }, onClick = {
+                        expanded = false
+                        viewModel.openCreateTaskDialog(task.id, task.rootParentId ?: task.id)
+                    })
+                    DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                        expanded = false
+                        viewModel.openEditTaskDialog(task)
+                    })
+                    DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                        expanded = false
+                        viewModel.openDeleteTaskDialog(task.id)
+                    })
                 }
             }
         }

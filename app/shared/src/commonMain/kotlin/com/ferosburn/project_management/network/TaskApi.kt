@@ -4,9 +4,12 @@ import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
 import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.models.task.TaskUpdateReq
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -32,4 +35,21 @@ object TaskApi : TaskApiInterface {
             setBody(data)
         }.body()
     }
+
+    override suspend fun updateTask(
+        projectId: String, taskId: String, data: TaskUpdateReq
+    ): NetworkResult<ApiResponse<TaskRes>> = safeApiCall { token ->
+        client.patch("/tasks/$projectId/$taskId") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(data)
+        }.body()
+    }
+
+    override suspend fun deleteTask(projectId: String, taskId: String): NetworkResult<ApiResponse<TaskRes>> =
+        safeApiCall { token ->
+            client.delete("/tasks/$projectId/$taskId") {
+                bearerAuth(token)
+            }.body()
+        }
 }
