@@ -15,6 +15,7 @@ junit = "4.13.2"
 kotlin = "2.3.21"
 kotlin-wrappers = "2026.5.4"
 kotlinx-coroutines = "1.11.0"
+kotlinx-datetime = "0.8.0-0.6.x-compat"
 ktor = "3.5.0"
 logback = "1.5.32"
 material3 = "1.11.0-alpha07"
@@ -48,14 +49,15 @@ kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-s
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
 # composeApp
+androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "androidx-navigation3" }
 compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material-icons" }
 compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "material-icons" }
-androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
-nav3-browser = { module = "com.github.terrakok:navigation3-browser", version.ref = "nav3-browser" }
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+nav3-browser = { module = "com.github.terrakok:navigation3-browser", version.ref = "nav3-browser" }
 russwolf-multiplatform-setting = { module = "com.russhwolf:multiplatform-settings", version.ref = "setting" }
 russwolf-multiplatform-setting-noarg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "setting" }
 # server

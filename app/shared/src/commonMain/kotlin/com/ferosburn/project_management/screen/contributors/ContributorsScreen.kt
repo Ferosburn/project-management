@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,7 +89,15 @@ fun ContributorsScreen(
                             Modifier.clickable(onClick = { onUserClick(user.id) }),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(user.name, Modifier.weight(1f).align(Alignment.CenterVertically))
+                            Text(user.name)
+                            Spacer(Modifier.weight(1f))
+                            Text(
+                                user.division?.name ?: user.role.name,
+                                fontSize = 10.sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(if (user.isActive) "Active" else "Inactive")
                             if (viewModel.isSuperAdmin) {
                                 Spacer(Modifier.width(8.dp))

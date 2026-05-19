@@ -8,7 +8,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ferosburn.project_management.screen.DashboardScreen
-import com.ferosburn.project_management.screen.ReportsScreen
+import com.ferosburn.project_management.screen.reports.ReportsScreen
 import com.ferosburn.project_management.screen.account.AccountScreen
 import com.ferosburn.project_management.screen.contributor_detail.ContributorDetailScreen
 import com.ferosburn.project_management.screen.contributor_manage.ContributorManageScreen

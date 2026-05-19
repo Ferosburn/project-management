@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskRes
 import com.ferosburn.project_management.models.task.TaskUpdateReq
@@ -97,10 +96,8 @@ class ProjectDetailViewModel : ViewModel() {
         countDownFinished = false
     }
 
-    suspend fun handleManageTaskState(
-        response: NetworkResult<ApiResponse<TaskRes>>,
-        projectId: String,
-        action: () -> Unit
+    suspend fun <T> handleManageTaskState(
+        response: NetworkResult<T>, projectId: String, action: () -> Unit
     ) {
         when (response) {
             is NetworkResult.Success -> {
