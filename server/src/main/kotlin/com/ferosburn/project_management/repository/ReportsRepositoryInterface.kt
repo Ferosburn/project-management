@@ -14,6 +14,6 @@ interface ReportsRepositoryInterface {
     fun getAllByUserId(userId: Uuid, filter: ReportFilter): List<ReportRes>
     fun getById(id: Uuid): ReportRes?
     fun create(userId: Uuid, data: ReportCreateReq): ReportRes
-    fun update(id: Uuid, data: ReportUpdateReq): ReportRes?
-    fun delete(id: Uuid): ReportRes?
+    fun update(userId: String, id: Uuid, data: ReportUpdateReq): ReportRes?
+    fun delete(userId: String, id: Uuid): ReportRes?
 }

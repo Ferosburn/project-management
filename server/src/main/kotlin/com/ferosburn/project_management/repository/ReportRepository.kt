@@ -11,6 +11,7 @@ import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
 import com.ferosburn.project_management.models.user.UserRes
+import com.ferosburn.project_management.utils.ForbiddenException
 import com.ferosburn.project_management.utils.InternalServerException
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -91,18 +92,20 @@ class ReportRepository : ReportsRepositoryInterface {
     }
 
     override fun update(
-        id: Uuid, data: ReportUpdateReq
+        userId: String, id: Uuid, data: ReportUpdateReq
     ): ReportRes? = transaction {
+        val report = getById(id) ?: return@transaction null
+        if (report.user.id != userId) throw ForbiddenException("Not allowed")
         val rowsUpdated = ReportsTable.update({ ReportsTable.id eq id }) { row ->
             data.detail?.let { row[detail] = it }
         }
         if (rowsUpdated == 0) null else getById(id)
     }
 
-    override fun delete(id: Uuid): ReportRes? = transaction {
+    override fun delete(userId: String, id: Uuid): ReportRes? = transaction {
         val report = getById(id) ?: return@transaction null
+        if (report.user.id != userId) throw ForbiddenException("Not allowed")
         val rowDeleted = ReportsTable.deleteWhere { ReportsTable.id eq id }
         if (rowDeleted == 0) null else report
     }
-
 }

@@ -29,7 +29,7 @@ fun Route.reportRoutes(reportRepository: ReportRepository) {
                 val reports = reportRepository.getAll(filter)
                 call.respond(HttpStatusCode.OK, ApiResponse.success(reports))
             }
-            get("/user") {
+            get("/me") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
                 val filter = ReportFilter(
@@ -68,14 +68,18 @@ fun Route.reportRoutes(reportRepository: ReportRepository) {
                         call.respond(HttpStatusCode.BadRequest, ApiResponse.badRequest(errors))
                         return@patch
                     }
-                    val updatedReport = reportRepository.update(id, req) ?: return@patch call.respond(
+                    val principal = call.principal<JWTPrincipal>()!!
+                    val userId = principal.payload.getClaim("userId").asString()
+                    val updatedReport = reportRepository.update(userId, id, req) ?: return@patch call.respond(
                         HttpStatusCode.NotFound, ApiResponse.notFound()
                     )
                     call.respond(HttpStatusCode.OK, ApiResponse.success(updatedReport))
                 }
                 delete {
                     val id = call.getUuidParameter("id") ?: return@delete
-                    val deletedReport = reportRepository.delete(id) ?: return@delete call.respond(
+                    val principal = call.principal<JWTPrincipal>()!!
+                    val userId = principal.payload.getClaim("userId").asString()
+                    val deletedReport = reportRepository.delete(userId, id) ?: return@delete call.respond(
                         HttpStatusCode.NotFound, ApiResponse.notFound()
                     )
                     call.respond(HttpStatusCode.OK, ApiResponse.success(deletedReport))
