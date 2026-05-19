@@ -44,26 +44,23 @@ actual fun BrowserIntegration(navState: NavState) {
 
 
                 when (name) {
-                    AccountScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> AccountScreen
-                    ContributorsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorsScreen
-                    DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> DashboardScreen
-                    LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> LoginScreen
-                    ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectsScreen
-                    ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectDetailScreen
-                    ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ReportsScreen
-                    ContributorDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorDetailScreen(
-                        params["userId"] ?: ""
-                    )
-
-                    ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorManageScreen()
                     SplashScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> SplashScreen
+                    LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> LoginScreen
+                    DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> DashboardScreen
+                    ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectsScreen
+                    ProjectManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectManageScreen()
                     ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectDetailScreen(
                         params["projectId"] ?: ""
                     )
-
-                    ProjectManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ProjectManageScreen()
+                    ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ReportsScreen
+                    ContributorsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorsScreen
+                    ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorManageScreen()
+                    ContributorDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> ContributorDetailScreen(
+                        params["userId"] ?: ""
+                    )
+                    AccountScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase() -> AccountScreen
                     else -> null
-                } as AppRoute?
+                }
             },
         )
     }
@@ -83,18 +80,17 @@ private fun isMobileBrowser(): Boolean = js(
 )
 
 private fun AppRoute.toBrowserHistoryFragment() = when (val key = this) {
-    AccountScreen -> buildBrowserHistoryFragment(AccountScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    ContributorsScreen -> buildBrowserHistoryFragment(ContributorsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    DashboardScreen -> buildBrowserHistoryFragment(DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    LoginScreen -> buildBrowserHistoryFragment(LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    ProjectsScreen -> buildBrowserHistoryFragment(ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    ProjectDetailScreen -> buildBrowserHistoryFragment(ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    ReportsScreen -> buildBrowserHistoryFragment(ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    is ContributorDetailScreen -> buildBrowserHistoryFragment(ContributorDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    is ContributorManageScreen -> buildBrowserHistoryFragment(ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     SplashScreen -> buildBrowserHistoryFragment(SplashScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
-    is ProjectDetailScreen -> buildBrowserHistoryFragment(ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    LoginScreen -> buildBrowserHistoryFragment(LoginScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    DashboardScreen -> buildBrowserHistoryFragment(DashboardScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    ProjectsScreen -> buildBrowserHistoryFragment(ProjectsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
     is ProjectManageScreen -> buildBrowserHistoryFragment(ProjectManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    is ProjectDetailScreen -> buildBrowserHistoryFragment(ProjectDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    ReportsScreen -> buildBrowserHistoryFragment(ReportsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    ContributorsScreen -> buildBrowserHistoryFragment(ContributorsScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    is ContributorManageScreen -> buildBrowserHistoryFragment(ContributorManageScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    is ContributorDetailScreen -> buildBrowserHistoryFragment(ContributorDetailScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
+    AccountScreen -> buildBrowserHistoryFragment(AccountScreen.serializer().descriptor.serialName.fromPascalCaseToSnakeCase())
 }
 
 private fun String.fromPascalCaseToSnakeCase(): String {
