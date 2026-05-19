@@ -39,6 +39,7 @@ class UserRepository : UserRepositoryInterface {
             filter.isActive?.let { andWhere { UsersTable.isActive eq it } }
             limit(filter.limit)
             offset(((filter.page - 1) * filter.limit).toLong())
+            orderBy(UsersTable.isActive to SortOrder.DESC)
             orderBy(UsersTable.name to SortOrder.ASC)
         }.map { mapToUserRes(it) }
     }
@@ -65,8 +66,12 @@ class UserRepository : UserRepositoryInterface {
     ): UserRes? = transaction {
         val rowsUpdated = UsersTable.update({ UsersTable.id eq id }) { row ->
             data.name?.let { row[name] = it }
-            data.role?.let { row[role] = UserRole.valueOf(it) }
-            row[division] = data.division?.let { UserDivision.valueOf(it) }
+            data.role?.let {
+                val role = UserRole.valueOf(it)
+                row[UsersTable.role] = role
+                if (role != UserRole.DEVELOPER) row[division] = null
+            }
+            data.division?.let { row[division] = UserDivision.valueOf(it) }
             data.isActive?.let { row[isActive] = it }
         }
         if (rowsUpdated == 0) null else getById(id)

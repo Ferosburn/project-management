@@ -87,8 +87,9 @@ class ReportRepository : ReportsRepositoryInterface {
             row[detail] = data.detail
             row[createdAt] = Clock.System.now().toEpochMilliseconds()
         }
-        insertStatement.resultedValues?.singleOrNull()?.let { mapToReportRes(it) }
+        val reportId = insertStatement.resultedValues?.singleOrNull()?.let { it[ReportsTable.id] }
             ?: throw InternalServerException("Failed to create report")
+        getById(reportId) ?: throw InternalServerException("Failed to create report")
     }
 
     override fun update(
