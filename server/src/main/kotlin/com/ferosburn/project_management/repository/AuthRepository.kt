@@ -47,7 +47,7 @@ class AuthRepository : AuthRepositoryInterface {
             it[expiresAt] = System.currentTimeMillis() + refreshExpiry * 1000
             it[createdAt] = System.currentTimeMillis()
         }
-        AuthTokenRes(accessToken, refreshToken, role)
+        AuthTokenRes(accessToken, refreshToken, userId.toString(), role)
     }
 
     override fun refreshToken(data: AuthRefreshTokenReq): AuthTokenRes? = transaction {
@@ -59,7 +59,7 @@ class AuthRepository : AuthRepositoryInterface {
         if (!user[UsersTable.isActive]) return@transaction null
         val role = user[UsersTable.role]
         val newAccessToken = JWTUtils.generateAccessToken(userId, role)
-        AuthTokenRes(newAccessToken, data.refreshToken, role)
+        AuthTokenRes(newAccessToken, data.refreshToken, userId.toString(), role)
     }
 
     override fun logout(userId: Uuid): Boolean = transaction {
@@ -70,7 +70,8 @@ class AuthRepository : AuthRepositoryInterface {
     override fun changePassword(
         userId: Uuid, data: AuthChangePasswordReq
     ): Boolean = transaction {
-        val user = UsersTable.selectAll().where { UsersTable.id eq userId }.singleOrNull() ?: throw NotFoundException("User not found")
+        val user = UsersTable.selectAll().where { UsersTable.id eq userId }.singleOrNull()
+            ?: throw NotFoundException("User not found")
 
         val isPasswordValid = PasswordUtils.verify(data.oldPassword, user[UsersTable.passwordHash])
         if (!isPasswordValid) throw UnauthorizedException("Old password is incorrect")

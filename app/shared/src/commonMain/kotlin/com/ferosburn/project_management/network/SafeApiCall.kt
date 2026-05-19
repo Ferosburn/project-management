@@ -27,6 +27,7 @@ suspend fun <T> safeApiCall(
                         LocalStorage.saveAccessToken(it.accessToken)
                         LocalStorage.saveRefreshToken(it.refreshToken)
                         LocalStorage.saveUserRole(it.role)
+                        LocalStorage.saveUserId(it.userId)
                     }
                     val accessToken =
                         LocalStorage.readAccessToken() ?: return NetworkResult.Error("Access token not set")
@@ -34,7 +35,7 @@ suspend fun <T> safeApiCall(
                 }
 
                 is NetworkResult.Error -> {
-                    LocalStorage.deleteTokens()
+                    LocalStorage.deleteTokenRes()
                     NavChannel.navigateToLogin()
                     NetworkResult.Error(refresh.message)
                 }

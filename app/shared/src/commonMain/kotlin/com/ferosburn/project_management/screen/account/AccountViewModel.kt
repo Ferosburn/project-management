@@ -18,7 +18,7 @@ class AccountViewModel : ViewModel() {
             _uiState.value = AccountUiState.Loading
             when (val response = AuthApi.logout()) {
                 is NetworkResult.Success -> {
-                    LocalStorage.deleteTokens()
+                    LocalStorage.deleteTokenRes()
                     _uiState.value = AccountUiState.SuccessLogout
                 }
 

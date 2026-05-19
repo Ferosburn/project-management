@@ -7,6 +7,7 @@ object LocalStorage : LocalStorageInterface {
     private const val ACCESS_TOKEN_KEY = "ACCESS_TOKEN"
     private const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN"
     private const val USER_ROLE_KEY = "USER_ROLE"
+    private const val USER_ID_KEY = "USER_ID"
     private val settings: Settings = Settings()
 
     override fun saveAccessToken(token: String) = settings.putString(ACCESS_TOKEN_KEY, token)
@@ -21,9 +22,11 @@ object LocalStorage : LocalStorageInterface {
 
     override fun deleteRefreshToken() = settings.remove(REFRESH_TOKEN_KEY)
 
-    override fun deleteTokens() {
+    override fun deleteTokenRes() {
         deleteAccessToken()
         deleteRefreshToken()
+        deleteUserRole()
+        deleteUserId()
     }
 
     override fun saveUserRole(role: UserRole) = settings.putString(USER_ROLE_KEY, role.name)
@@ -34,6 +37,12 @@ object LocalStorage : LocalStorageInterface {
     }
 
     override fun deleteUserRole() = settings.remove(USER_ROLE_KEY)
+
+    override fun saveUserId(userId: String) = settings.putString(USER_ID_KEY, userId)
+
+    override fun readUserId(): String? = settings.getStringOrNull(USER_ID_KEY)
+
+    override fun deleteUserId() = settings.remove(USER_ID_KEY)
 
     override fun deleteAll() = settings.clear()
 }

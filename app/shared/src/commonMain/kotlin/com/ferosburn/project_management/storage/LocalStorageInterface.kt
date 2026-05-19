@@ -9,9 +9,12 @@ interface LocalStorageInterface {
     fun saveRefreshToken(token: String)
     fun readRefreshToken(): String?
     fun deleteRefreshToken()
-    fun deleteTokens()
+    fun deleteTokenRes()
     fun saveUserRole(role: UserRole)
     fun readUserRole(): UserRole?
     fun deleteUserRole()
+    fun saveUserId(userId: String)
+    fun readUserId(): String?
+    fun deleteUserId()
     fun deleteAll()
 }

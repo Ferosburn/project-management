@@ -60,6 +60,7 @@ class LoginViewModel : ViewModel() {
                         LocalStorage.saveAccessToken(it.accessToken)
                         LocalStorage.saveRefreshToken(it.refreshToken)
                         LocalStorage.saveUserRole(it.role)
+                        LocalStorage.saveUserId(it.userId)
                     }
                     _uiState.value = LoginUiState.Success
                 }

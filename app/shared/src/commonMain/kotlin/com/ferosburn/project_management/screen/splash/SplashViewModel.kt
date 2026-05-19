@@ -27,11 +27,12 @@ class SplashViewModel : ViewModel() {
                         LocalStorage.saveAccessToken(it.accessToken)
                         LocalStorage.saveRefreshToken(it.refreshToken)
                         LocalStorage.saveUserRole(it.role)
+                        LocalStorage.saveUserId(it.userId)
                     }
                     _uiState.value = SplashUiState.Success
                 }
                 is NetworkResult.Error<*> -> {
-                    LocalStorage.deleteTokens()
+                    LocalStorage.deleteTokenRes()
                     _uiState.value = SplashUiState.Failed(refresh.message)
                 }
             }
