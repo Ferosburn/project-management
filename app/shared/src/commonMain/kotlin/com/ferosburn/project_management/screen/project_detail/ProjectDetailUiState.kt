@@ -8,7 +8,10 @@ data class ProjectDetailUiState(
     val projectData: ProjectDataUiState = ProjectDataUiState.Loading,
     val tasks: TasksUiState = TasksUiState.Loading,
     val taskCreate: TaskCreateUiState = TaskCreateUiState.Initial,
+    val tabs: Set<ProjectDetailTab> = emptySet(),
+    val selectedTab: ProjectDetailTab? = null,
 )
+
 sealed interface TaskCreateUiState {
     data object Initial : TaskCreateUiState
     data object Loading : TaskCreateUiState

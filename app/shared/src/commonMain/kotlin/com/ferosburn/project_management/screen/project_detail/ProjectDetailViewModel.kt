@@ -35,7 +35,7 @@ class ProjectDetailViewModel : ViewModel() {
     var currentParentId by mutableStateOf<String?>(null)
     var currentRootParentId by mutableStateOf<String?>(null)
     var showDeleteDialog by mutableStateOf(false)
-    var countDownFinished by mutableStateOf(false)
+    var tabExpanded by mutableStateOf(false)
 
     private fun validateForm(): Boolean {
         nameError = when {
@@ -47,6 +47,15 @@ class ProjectDetailViewModel : ViewModel() {
             else -> null
         }
         return listOf(nameError, descriptionError).all { it.isNullOrBlank() }
+    }
+
+    fun init(projectId: String, isExpanded: Boolean) {
+        getProjectDetail(projectId = projectId)
+        getAllTasks(projectId = projectId)
+        updateTabs(setOf(ProjectDetailTab.REPORTS))
+        if (isExpanded) {
+            setSelectedTab(ProjectDetailTab.REPORTS)
+        }
     }
 
     fun onNameChange(value: String) {
@@ -87,13 +96,27 @@ class ProjectDetailViewModel : ViewModel() {
 
     fun openDeleteTaskDialog(taskId: String) {
         showDeleteDialog = true
-        countDownFinished = false
         currentTaskId = taskId
     }
 
     fun closeDeleteTaskDialog() {
         showDeleteDialog = false
-        countDownFinished = false
+    }
+
+    fun openTaskDetail(taskId: String) {
+        val tabs = _uiStates.value.tabs
+        updateTabs(listOf(tabs, listOf(ProjectDetailTab.DETAIL)).flatten().toSet())
+        setSelectedTab(ProjectDetailTab.DETAIL)
+        tabExpanded = true
+        currentTaskId = taskId
+    }
+
+    fun updateTabs(tabs: Set<ProjectDetailTab>) {
+        _uiStates.update { it.copy(tabs = tabs) }
+    }
+
+    fun setSelectedTab(tab: ProjectDetailTab?) {
+        _uiStates.update { it.copy(selectedTab = tab) }
     }
 
     suspend fun <T> handleManageTaskState(

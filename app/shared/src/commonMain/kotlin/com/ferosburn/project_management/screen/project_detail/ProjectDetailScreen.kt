@@ -1,24 +1,13 @@
 package com.ferosburn.project_management.screen.project_detail
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -27,9 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferosburn.project_management.component.misc.SimpleCountDown
-import com.ferosburn.project_management.component.scaffold.AppScaffold
-import com.ferosburn.project_management.component.utils.clearFocusOnTap
-import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.component.overlays.BaseConfirmationDialog
+import com.ferosburn.project_management.component.overlays.BaseDialogOverlay
+import com.ferosburn.project_management.component.overlays.ErrorPopUp
+import com.ferosburn.project_management.component.overlays.LoadingOverlay
+import com.ferosburn.project_management.component.scaffold.AppScaffold2
+import com.ferosburn.project_management.utils.LocalWindowSize
+import com.ferosburn.project_management.utils.WindowSize
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -39,136 +32,30 @@ fun ProjectDetailScreen(
 ) {
     val viewModel = remember { ProjectDetailViewModel() }
     val state by viewModel.uiStates.collectAsStateWithLifecycle()
+    val windowSize = LocalWindowSize.current
 
     LaunchedEffect(Unit) {
-        viewModel.getProjectDetail(projectId = projectId)
-        viewModel.getAllTasks(projectId = projectId)
+        viewModel.init(projectId, windowSize == WindowSize.EXPANDED)
     }
 
-    Box(
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        AppScaffold(
-            title = "Project Detail",
-            onBack = onBack,
-        ) {
-            when (state.projectData) {
-                is ProjectDataUiState.Failed -> Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = (state.projectData as ProjectDataUiState.Failed).message,
-                    )
-                }
-
-                ProjectDataUiState.Loading -> Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-
-                is ProjectDataUiState.Success -> {
-                    val project = (state.projectData as ProjectDataUiState.Success).data
-                    LazyColumn(
-                        Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            Spacer(Modifier.height(20.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(project.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("id: ${project.id}", color = Color.Gray, fontSize = 10.sp, lineHeight = 10.sp)
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Text(
-                                    if (project.isActive) "Active" else "Inactive", color = Color.Gray, fontSize = 14.sp
-                                )
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            Text(project.description, textAlign = TextAlign.Justify)
-                            Spacer(Modifier.height(20.dp))
-                        }
-                        when (state.tasks) {
-                            is TasksUiState.Failed -> item {
-                                Box(
-                                    Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(text = (state.tasks as TasksUiState.Failed).message)
-                                }
-                            }
-
-                            TasksUiState.Loading -> item {
-                                Box(
-                                    Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-
-                            is TasksUiState.Success -> {
-                                val tasks = (state.tasks as TasksUiState.Success).data
-                                if (viewModel.isManager) item {
-                                    Button(
-                                        onClick = { viewModel.showCreateTaskDialog = true },
-                                        shape = RoundedCornerShape(12.dp),
-                                    ) {
-                                        Text("Create New Task", fontSize = 14.sp)
-                                    }
-                                }
-                                if (tasks.isEmpty()) item {
-                                    Box(
-                                        Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
-                                    ) { Text("No Data") }
-                                } else {
-                                    item { Spacer(Modifier.height(8.dp)) }
-                                    items(tasks) { task ->
-                                        TaskItem(task, viewModel)
-                                    }
-                                    item { Spacer(Modifier.height(20.dp)) }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    LaunchedEffect(windowSize) {
+        viewModel.tabExpanded = false
+        if (state.selectedTab == null && windowSize == WindowSize.EXPANDED) {
+            viewModel.setSelectedTab(ProjectDetailTab.REPORTS)
+        } else {
+            viewModel.setSelectedTab(null)
         }
+    }
 
-        AnimatedVisibility(
-            visible = state.taskCreate is TaskCreateUiState.Failed,
-            enter = slideInVertically(),
-            exit = slideOutVertically(),
-        ) {
-            Box(
-                Modifier.padding(top = 20.dp).widthIn(max = 400.dp).shadow(10.dp, shape = RoundedCornerShape(12.dp))
-                    .background(Color.Red, shape = RoundedCornerShape(20.dp)).padding(12.dp),
-            ) {
-                val errorMessage = (state.taskCreate as? TaskCreateUiState.Failed)?.message ?: ""
-                AnimatedVisibility(
-                    visible = errorMessage.isNotBlank(),
-                    enter = expandHorizontally(),
-                    exit = shrinkHorizontally(),
-                ) {
-                    Text(
-                        errorMessage, fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.SemiBold
-                    )
-                }
+    AppScaffold2(
+        title = "Project Detail", onBack = onBack,
+        overlays = {
+            if (windowSize == WindowSize.MEDIUM) {
+                ProjectDetailSideView(Modifier.align(Alignment.TopEnd), viewModel, state, windowSize)
             }
-        }
 
-        if (viewModel.showCreateTaskDialog) Box(
-            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
-                    .shadow(10.dp, shape = RoundedCornerShape(12.dp))
-                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp).clearFocusOnTap(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            if (viewModel.showCreateTaskDialog) BaseDialogOverlay(
+                onClose = viewModel::closeCreateTaskDialog
             ) {
                 OutlinedTextField(
                     value = viewModel.name,
@@ -229,37 +116,20 @@ fun ProjectDetailScreen(
                     }
                 }
             }
-        }
 
-        if (viewModel.showDeleteDialog) Box(
-            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(
-                onClick = viewModel::closeDeleteTaskDialog
-            ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
-                    .shadow(10.dp, shape = RoundedCornerShape(10.dp))
-                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            if (viewModel.showDeleteDialog) BaseConfirmationDialog(
+                title = "Delete Task Permanently?",
+                description = "You can not reverse this action!",
+                onClose = { viewModel.closeDeleteTaskDialog(); viewModel.currentTaskId = null },
             ) {
-                Text(
-                    "Delete Task Permanently?",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("You can not reverse this action!")
-                Spacer(modifier = Modifier.height(20.dp))
+                var countDownFinished by remember { mutableStateOf(false) }
+
                 Row {
                     Button(
-                        onClick = {
-                            viewModel.closeDeleteTaskDialog()
-                            viewModel.deleteTask(projectId)
-                        },
+                        onClick = { viewModel.deleteTask(projectId) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = viewModel.countDownFinished,
+                        enabled = countDownFinished,
                         colors = ButtonDefaults.textButtonColors(
                             containerColor = Color.Red,
                             contentColor = Color.White,
@@ -267,15 +137,15 @@ fun ProjectDetailScreen(
                             disabledContentColor = Color.Gray,
                         )
                     ) {
-                        if (viewModel.countDownFinished) {
+                        if (countDownFinished) {
                             Text("Delete", fontSize = 14.sp)
                         } else {
-                            SimpleCountDown(10.seconds, onFinish = { viewModel.countDownFinished = true })
+                            SimpleCountDown(10.seconds, onFinish = { countDownFinished = true })
                         }
                     }
                     Spacer(modifier = Modifier.width(20.dp))
                     Button(
-                        onClick = viewModel::closeDeleteTaskDialog,
+                        onClick = { viewModel.closeDeleteTaskDialog(); viewModel.currentTaskId = null },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                     ) {
@@ -283,55 +153,119 @@ fun ProjectDetailScreen(
                     }
                 }
             }
-        }
 
-        if (state.taskCreate is TaskCreateUiState.Loading) Box(
-            Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
+            ErrorPopUp(
+                visible = state.taskCreate is TaskCreateUiState.Failed,
+                message = (state.taskCreate as? TaskCreateUiState.Failed)?.message ?: ""
+            )
+
+            if (state.taskCreate is TaskCreateUiState.Loading) LoadingOverlay()
+        },
+    ) {
+        when (state.projectData) {
+            is ProjectDataUiState.Failed -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = (state.projectData as ProjectDataUiState.Failed).message,
+                )
+            }
+
+            ProjectDataUiState.Loading -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+
+            is ProjectDataUiState.Success -> {
+                when (windowSize) {
+                    WindowSize.EXPANDED -> Row {
+                        MainContent(state, viewModel, Modifier.weight(2f))
+                        ProjectDetailSideView(Modifier.weight(1f), viewModel, state, windowSize)
+                    }
+
+                    WindowSize.MEDIUM -> MainContent(state, viewModel)
+
+                    WindowSize.COMPACT -> Box {
+                        MainContent(state, viewModel)
+                        ProjectDetailSideView(Modifier.align(Alignment.TopEnd), viewModel, state, windowSize)
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun TaskItem(task: TaskRes, viewModel: ProjectDetailViewModel, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    Column(
-        modifier.shadow(10.dp, shape = RoundedCornerShape(12.dp))
-            .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+private fun MainContent(
+    state: ProjectDetailUiState,
+    viewModel: ProjectDetailViewModel,
+    modifier: Modifier = Modifier,
+) {
+    val project = (state.projectData as ProjectDataUiState.Success).data
+    LazyColumn(
+        modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(task.description, fontSize = 10.sp, color = Color.Gray)
-            }
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert, contentDescription = "More options"
-                    )
+        item {
+            Spacer(Modifier.height(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(project.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("id: ${project.id}", color = Color.Gray, fontSize = 10.sp, lineHeight = 10.sp)
                 }
-                DropdownMenu(
-                    expanded = expanded, onDismissRequest = { expanded = false }) {
-                    DropdownMenuItem(text = { Text("Create New Sub-task") }, onClick = {
-                        expanded = false
-                        viewModel.openCreateTaskDialog(task.id, task.rootParentId ?: task.id)
-                    })
-                    DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                        expanded = false
-                        viewModel.openEditTaskDialog(task)
-                    })
-                    DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                        expanded = false
-                        viewModel.openDeleteTaskDialog(task.id)
-                    })
-                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    if (project.isActive) "Active" else "Inactive", color = Color.Gray, fontSize = 14.sp
+                )
             }
+            Spacer(Modifier.height(8.dp))
+            Text(project.description, textAlign = TextAlign.Justify)
+            Spacer(Modifier.height(20.dp))
         }
-        task.tasks.forEach {
-            TaskItem(it, viewModel, Modifier.padding(start = 20.dp))
+        when (state.tasks) {
+            is TasksUiState.Failed -> item {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = state.tasks.message)
+                }
+            }
+
+            TasksUiState.Loading -> item {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is TasksUiState.Success -> {
+                val tasks = state.tasks.data
+                if (viewModel.isManager) item {
+                    Button(
+                        onClick = { viewModel.showCreateTaskDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Create New Task", fontSize = 14.sp)
+                    }
+                }
+                if (tasks.isEmpty()) item {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("No Data") }
+                } else {
+                    item { Spacer(Modifier.height(8.dp)) }
+                    items(tasks) { task ->
+                        TaskItem(task, viewModel, state)
+                    }
+                    item { Spacer(Modifier.height(20.dp)) }
+                }
+            }
         }
     }
 }
