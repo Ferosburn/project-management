@@ -47,6 +47,13 @@ fun Route.taskRoutes(taskRepository: TaskRepository) {
                 call.respond(HttpStatusCode.Created, ApiResponse.created(newTask))
             }
             route("/{id}") {
+                get {
+                    val id = call.getUuidParameter("id") ?: return@get
+                    val task = taskRepository.getById(id) ?: return@get call.respond(
+                        HttpStatusCode.NotFound, ApiResponse.notFound()
+                    )
+                    call.respond(HttpStatusCode.OK, ApiResponse.success(task))
+                }
                 patch {
                     if (!call.checkRole(UserRole.MANAGER)) return@patch
                     val id = call.getUuidParameter("id") ?: return@patch
