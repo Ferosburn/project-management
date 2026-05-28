@@ -182,14 +182,14 @@ fun ProjectDetailScreen(
             is ProjectDataUiState.Success -> {
                 when (windowSize) {
                     WindowSize.EXPANDED -> Row {
-                        MainContent(state, viewModel, Modifier.weight(2f))
+                        MainContent(projectId, state, viewModel, Modifier.weight(2f))
                         ProjectDetailSideView(Modifier.weight(1f), viewModel, state, windowSize)
                     }
 
-                    WindowSize.MEDIUM -> MainContent(state, viewModel)
+                    WindowSize.MEDIUM -> MainContent(projectId, state, viewModel)
 
                     WindowSize.COMPACT -> Box {
-                        MainContent(state, viewModel)
+                        MainContent(projectId, state, viewModel)
                         ProjectDetailSideView(Modifier.align(Alignment.TopEnd), viewModel, state, windowSize)
                     }
                 }
@@ -200,6 +200,7 @@ fun ProjectDetailScreen(
 
 @Composable
 private fun MainContent(
+    projectId: String,
     state: ProjectDetailUiState,
     viewModel: ProjectDetailViewModel,
     modifier: Modifier = Modifier,
@@ -261,7 +262,7 @@ private fun MainContent(
                 } else {
                     item { Spacer(Modifier.height(8.dp)) }
                     items(tasks) { task ->
-                        TaskItem(task, viewModel, state)
+                        TaskItem(task, projectId, viewModel, state)
                     }
                     item { Spacer(Modifier.height(20.dp)) }
                 }

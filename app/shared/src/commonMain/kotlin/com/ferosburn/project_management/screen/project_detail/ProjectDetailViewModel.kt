@@ -103,12 +103,13 @@ class ProjectDetailViewModel : ViewModel() {
         showDeleteDialog = false
     }
 
-    fun openTaskDetail(taskId: String) {
+    fun openTaskDetail(projectId: String, taskId: String) {
         val tabs = _uiStates.value.tabs
         updateTabs(listOf(tabs, listOf(ProjectDetailTab.DETAIL)).flatten().toSet())
         setSelectedTab(ProjectDetailTab.DETAIL)
         tabExpanded = true
         currentTaskId = taskId
+        getTaskDetail(projectId)
     }
 
     fun updateTabs(tabs: Set<ProjectDetailTab>) {
@@ -160,6 +161,24 @@ class ProjectDetailViewModel : ViewModel() {
                 is NetworkResult.Success -> {
                     response.data.data?.let { data ->
                         _uiStates.update { it.copy(tasks = TasksUiState.Success(data)) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun getTaskDetail(projectId: String) {
+        viewModelScope.launch {
+            if (currentTaskId.isNullOrBlank()) {
+                _uiStates.update { it.copy(task = TaskDetailUiState.Failed("taskId is required")) }
+                return@launch
+            }
+            _uiStates.update { it.copy(task = TaskDetailUiState.Loading) }
+            when (val response = TaskApi.getTask(projectId, currentTaskId!!)) {
+                is NetworkResult.Error -> _uiStates.update { it.copy(task = TaskDetailUiState.Failed(response.message)) }
+                is NetworkResult.Success -> {
+                    response.data.data?.let { data ->
+                        _uiStates.update { it.copy(task = TaskDetailUiState.Success(data)) }
                     }
                 }
             }

@@ -5,16 +5,11 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +19,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ferosburn.project_management.utils.WindowSize
 
 @Composable
@@ -80,7 +78,7 @@ fun ProjectDetailSideView(
             enter = expandHorizontally(),
             exit = shrinkHorizontally(),
         ) {
-            Column(Modifier.fillMaxHeight().contentWidth().background(Color.White)) {
+            Column(Modifier.fillMaxHeight().contentWidth().background(Color.White).padding(20.dp)) {
                 if (state.selectedTab == ProjectDetailTab.DETAIL) {
                     Icon(
                         Icons.Filled.Cancel, null,
@@ -97,8 +95,55 @@ fun ProjectDetailSideView(
                         },
                     )
                 }
-                Text(state.selectedTab?.label ?: "-")
-                Text("taskId: ${viewModel.currentTaskId ?: "-"}")
+                when (state.selectedTab) {
+                    ProjectDetailTab.REPORTS -> {
+                        Text(state.selectedTab.label)
+                        Text("taskId: ${viewModel.currentTaskId ?: "-"}")
+                    }
+
+                    ProjectDetailTab.DETAIL -> TaskDetailView(state.task)
+                    null -> {
+                        Text(state.selectedTab?.label ?: "-")
+                        Text("taskId: ${viewModel.currentTaskId ?: "-"}")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TaskDetailView(state: TaskDetailUiState) {
+    when (state) {
+        is TaskDetailUiState.Failed -> Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = state.message)
+        }
+
+        TaskDetailUiState.Loading -> Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+
+        is TaskDetailUiState.Success -> {
+            val detail = state.data
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(detail.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("id: ${detail.id}", color = Color.Gray, fontSize = 10.sp, lineHeight = 10.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        detail.status.name, color = Color.Gray, fontSize = 12.sp
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(detail.description, textAlign = TextAlign.Justify)
             }
         }
     }

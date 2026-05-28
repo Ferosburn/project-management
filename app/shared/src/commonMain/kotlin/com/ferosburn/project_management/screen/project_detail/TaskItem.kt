@@ -30,7 +30,11 @@ import com.ferosburn.project_management.models.task.TaskRes
 
 @Composable
 fun TaskItem(
-    task: TaskRes, viewModel: ProjectDetailViewModel, state: ProjectDetailUiState, modifier: Modifier = Modifier
+    task: TaskRes,
+    projectId: String,
+    viewModel: ProjectDetailViewModel,
+    state: ProjectDetailUiState,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(
@@ -53,7 +57,7 @@ fun TaskItem(
                     expanded = expanded, onDismissRequest = { expanded = false }) {
                     DropdownMenuItem(text = { Text("See Detail") }, onClick = {
                         expanded = false
-                        viewModel.openTaskDetail(task.id)
+                        viewModel.openTaskDetail(projectId, task.id)
                     })
                     DropdownMenuItem(text = { Text("Create New Sub-task") }, onClick = {
                         expanded = false
@@ -71,7 +75,7 @@ fun TaskItem(
             }
         }
         task.tasks.forEach {
-            TaskItem(it, viewModel, state, Modifier.padding(start = 20.dp))
+            TaskItem(it, projectId, viewModel, state, Modifier.padding(start = 20.dp))
         }
     }
 }

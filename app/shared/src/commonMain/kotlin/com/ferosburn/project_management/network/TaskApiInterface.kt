@@ -11,6 +11,7 @@ interface TaskApiInterface {
         projectId: String, filter: TaskFilter = TaskFilter()
     ): NetworkResult<ApiResponse<List<TaskRes>>>
 
+    suspend fun getTask(projectId: String, taskId: String): NetworkResult<ApiResponse<TaskRes>>
     suspend fun createTask(projectId: String, data: TaskCreateReq): NetworkResult<ApiResponse<TaskRes>>
     suspend fun updateTask(projectId: String, taskId: String, data: TaskUpdateReq): NetworkResult<ApiResponse<TaskRes>>
     suspend fun deleteTask(projectId: String, taskId: String): NetworkResult<ApiResponse<TaskRes>>

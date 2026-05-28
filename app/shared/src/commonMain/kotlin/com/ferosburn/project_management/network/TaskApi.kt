@@ -26,6 +26,13 @@ object TaskApi : TaskApiInterface {
         }.body()
     }
 
+    override suspend fun getTask(projectId: String, taskId: String): NetworkResult<ApiResponse<TaskRes>> =
+        safeApiCall(true) { token ->
+            client.get("/tasks/$projectId/$taskId") {
+                bearerAuth(token)
+            }.body()
+        }
+
     override suspend fun createTask(
         projectId: String, data: TaskCreateReq
     ): NetworkResult<ApiResponse<TaskRes>> = safeApiCall(true) { token ->
