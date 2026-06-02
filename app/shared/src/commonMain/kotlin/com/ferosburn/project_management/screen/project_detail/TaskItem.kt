@@ -59,18 +59,20 @@ fun TaskItem(
                         expanded = false
                         viewModel.openTaskDetail(projectId, task.id)
                     })
-                    DropdownMenuItem(text = { Text("Create New Sub-task") }, onClick = {
-                        expanded = false
-                        viewModel.openCreateTaskDialog(task.id, task.rootParentId ?: task.id)
-                    })
-                    DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                        expanded = false
-                        viewModel.openEditTaskDialog(task)
-                    })
-                    DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                        expanded = false
-                        viewModel.openDeleteTaskDialog(task.id)
-                    })
+                    if (viewModel.isManager) {
+                        DropdownMenuItem(text = { Text("Create New Sub-task") }, onClick = {
+                            expanded = false
+                            viewModel.taskDelegate.openCreateTaskDialog(task.id, task.rootParentId ?: task.id)
+                        })
+                        DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                            expanded = false
+                            viewModel.taskDelegate.openEditTaskDialog(task)
+                        })
+                        DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                            expanded = false
+                            viewModel.taskDelegate.openDeleteTaskDialog(task.id)
+                        })
+                    }
                 }
             }
         }

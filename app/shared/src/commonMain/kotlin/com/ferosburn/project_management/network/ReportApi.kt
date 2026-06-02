@@ -5,6 +5,7 @@ import com.ferosburn.project_management.models.report.ReportCreateReq
 import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
+import com.ferosburn.project_management.utils.setQueryParams
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
@@ -22,6 +23,7 @@ object ReportApi : ReportApiInterface {
         safeApiCall(true) { token ->
             client.get("/reports") {
                 bearerAuth(token)
+                setQueryParams(filter)
             }.body()
         }
 
