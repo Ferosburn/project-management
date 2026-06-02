@@ -6,18 +6,12 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -32,15 +26,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferosburn.project_management.component.misc.SimpleCountDown
 import com.ferosburn.project_management.component.scaffold.AppScaffold
 import com.ferosburn.project_management.component.utils.clearFocusOnTap
+import com.ferosburn.project_management.screen.project_detail.ReportsListView
 import com.ferosburn.project_management.utils.LocalWindowSize
 import com.ferosburn.project_management.utils.WindowSize
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.format.*
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 @Composable
 @Preview
@@ -91,84 +81,12 @@ fun ReportsScreen() {
                     if (reports.isEmpty()) Box(
                         Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
-                    ) {
-                        Text("No Data")
-                    } else LazyColumn(
-                        Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item { Spacer(modifier = Modifier.height(20.dp)) }
-                        items(reports) { report ->
-                            Column(
-                                Modifier.shadow(10.dp, shape = RoundedCornerShape(12.dp))
-                                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                var expanded by remember { mutableStateOf(false) }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        report.user.name,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (!report.user.isActive) Color.Gray else Color.Black
-                                    )
-                                    if (!report.user.isActive) {
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            "(Deactivated)",
-                                            fontSize = 10.sp,
-                                            color = Color.Gray,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        report.user.division?.name ?: report.user.role.name,
-                                        fontSize = 10.sp,
-                                        color = Color.Gray,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(Modifier.weight(1f))
-                                    Text(
-                                        Instant.fromEpochMilliseconds(report.createdAt)
-                                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                                            .format(LocalDateTime.Format {
-                                                hour(); char(':'); minute(); char(' ')
-                                                dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-                                                chars(", "); day(); chars(" ")
-                                                monthName(names = MonthNames.ENGLISH_ABBREVIATED)
-                                                chars(" "); year()
-//                                                byUnicodePattern("HH:mm EEE, d MMM y")
-                                            }),
-                                        fontSize = 10.sp, color = Color.Gray,
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    if (viewModel.userId == report.user.id) {
-                                        Box {
-                                            IconButton(onClick = { expanded = true }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MoreVert,
-                                                    contentDescription = "More options"
-                                                )
-                                            }
-                                            DropdownMenu(
-                                                expanded = expanded, onDismissRequest = { expanded = false }) {
-                                                DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                                                    expanded = false
-                                                    viewModel.openEditReportDialog(report)
-                                                })
-                                                DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                                                    expanded = false
-                                                    viewModel.openDeleteTaskDialog(report.id)
-                                                })
-                                            }
-                                        }
-                                    }
-                                }
-                                Text(report.project.name, fontSize = 14.sp)
-                                Text(report.detail)
-                            }
-                        }
-                        item { Spacer(modifier = Modifier.height(20.dp)) }
-                    }
+                    ) { Text("No Data") } else ReportsListView(
+                        reports,
+                        viewModel.userId,
+                        viewModel::openEditReportDialog,
+                        viewModel::openDeleteReportDialog,
+                    )
                 }
             }
         }

@@ -83,7 +83,7 @@ class ReportsViewModel : ViewModel() {
         showReportFormDialog = false
     }
 
-    fun openDeleteTaskDialog(reportId: String) {
+    fun openDeleteReportDialog(reportId: String) {
         showDeleteDialog = true
         countDownFinished = false
         currentReportId = reportId

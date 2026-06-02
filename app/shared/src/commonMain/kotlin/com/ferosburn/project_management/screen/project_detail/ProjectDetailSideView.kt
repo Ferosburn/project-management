@@ -6,13 +6,14 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -23,12 +24,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.utils.WindowSize
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DayOfWeekNames
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 @Composable
 fun ProjectDetailSideView(
     modifier: Modifier = Modifier,
+    projectId: String,
     viewModel: ProjectDetailViewModel,
+    tabManageState: ProjectTabManageStates,
     state: ProjectDetailUiState,
     windowSize: WindowSize,
 ) {
@@ -36,7 +48,7 @@ fun ProjectDetailSideView(
         return when (windowSize) {
             WindowSize.COMPACT -> this.fillMaxWidth(0.75f)
             WindowSize.MEDIUM -> this.width(400.dp)
-            WindowSize.EXPANDED -> this.fillMaxWidth()
+            WindowSize.EXPANDED -> this.width(400.dp)
         }
     }
 
@@ -53,59 +65,42 @@ fun ProjectDetailSideView(
                     }
                 }, horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            state.tabs.forEach { tab ->
+            tabManageState.tabs.forEach { tab ->
                 val shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
                 Text(
                     tab.label,
-                    Modifier.shadow(if (tab == state.selectedTab) 10.dp else 5.dp, shape)
-                        .background(if (tab == state.selectedTab) Color.White else Color.Gray, shape)
-                        .clickable(enabled = !(state.selectedTab == tab && windowSize == WindowSize.EXPANDED)) {
-                            if (state.selectedTab == tab) {
-                                viewModel.setSelectedTab(null)
-                                viewModel.tabExpanded = !viewModel.tabExpanded
+                    Modifier.shadow(if (tab == tabManageState.activeTab) 10.dp else 5.dp, shape)
+                        .background(if (tab == tabManageState.activeTab) Color.White else Color.Gray, shape)
+                        .clickable(enabled = !(tabManageState.activeTab == tab && windowSize == WindowSize.EXPANDED)) {
+                            if (tabManageState.activeTab == tab) {
+                                viewModel.tabDelegate.setActiveTab(null)
                             } else {
-                                viewModel.setSelectedTab(tab)
-                                viewModel.tabExpanded = true
+                                viewModel.tabDelegate.setActiveTab(tab)
                             }
                         }.padding(4.dp),
-                    color = if (tab == state.selectedTab) Color.Black else Color.White,
+                    color = if (tab == tabManageState.activeTab) Color.Black else Color.White,
                 )
             }
         }
 
         AnimatedVisibility(
-            visible = windowSize == WindowSize.EXPANDED || viewModel.tabExpanded,
+            visible = windowSize == WindowSize.EXPANDED || tabManageState.expanded,
             enter = expandHorizontally(),
             exit = shrinkHorizontally(),
         ) {
-            Column(Modifier.fillMaxHeight().contentWidth().background(Color.White).padding(20.dp)) {
-                if (state.selectedTab == ProjectDetailTab.DETAIL) {
+            Column(Modifier.fillMaxHeight().contentWidth().background(Color.White)) {
+                if (tabManageState.activeTab == ProjectDetailTab.DETAIL) {
                     Icon(
                         Icons.Filled.Cancel, null,
                         Modifier.align(Alignment.End).clickable {
-                            val filteredTabs = state.tabs.filter { tab -> tab != ProjectDetailTab.DETAIL }.toSet()
-                            viewModel.updateTabs(filteredTabs)
-                            if (windowSize == WindowSize.EXPANDED) {
-                                viewModel.setSelectedTab(filteredTabs.last())
-                            } else {
-                                viewModel.setSelectedTab(null)
-                            }
-                            viewModel.currentTaskId = null
-                            viewModel.tabExpanded = false
+                            viewModel.closeTaskDetail(windowSize == WindowSize.EXPANDED)
                         },
                     )
                 }
-                when (state.selectedTab) {
-                    ProjectDetailTab.REPORTS -> {
-                        Text(state.selectedTab.label)
-                        Text("taskId: ${viewModel.currentTaskId ?: "-"}")
-                    }
-
-                    ProjectDetailTab.DETAIL -> TaskDetailView(state.task)
-                    null -> {
-                        Text(state.selectedTab?.label ?: "-")
-                        Text("taskId: ${viewModel.currentTaskId ?: "-"}")
-                    }
+                when (tabManageState.activeTab) {
+                    ProjectDetailTab.REPORTS -> ReportsTabView(projectId, viewModel, state.reports)
+                    ProjectDetailTab.DETAIL -> TaskDetailTabView(state.task)
+                    null -> {}
                 }
             }
         }
@@ -113,38 +108,151 @@ fun ProjectDetailSideView(
 }
 
 @Composable
-fun TaskDetailView(state: TaskDetailUiState) {
+fun TaskDetailTabView(state: TaskDetailUiState) {
     when (state) {
         is TaskDetailUiState.Failed -> Box(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().padding(20.dp),
             contentAlignment = Alignment.Center,
-        ) {
-            Text(text = state.message)
-        }
+        ) { Text(text = state.message) }
 
         TaskDetailUiState.Loading -> Box(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().padding(20.dp),
             contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
+        ) { CircularProgressIndicator() }
 
         is TaskDetailUiState.Success -> {
             val detail = state.data
-            Column {
+            Column(Modifier.padding(horizontal = 20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(detail.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Text("id: ${detail.id}", color = Color.Gray, fontSize = 10.sp, lineHeight = 10.sp)
                     }
                     Spacer(Modifier.width(12.dp))
-                    Text(
-                        detail.status.name, color = Color.Gray, fontSize = 12.sp
-                    )
+                    Text(detail.status.name, color = Color.Gray, fontSize = 12.sp)
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(detail.description, textAlign = TextAlign.Justify)
             }
         }
+    }
+}
+
+@Composable
+fun ReportsTabView(
+    projectId: String,
+    viewModel: ProjectDetailViewModel,
+    state: ProjectReportsUiState,
+) {
+    LaunchedEffect(Unit) { viewModel.getReports(projectId) }
+
+    when (state) {
+        is ProjectReportsUiState.Failed -> Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { Text(text = state.message) }
+
+        ProjectReportsUiState.Loading -> Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { CircularProgressIndicator() }
+
+        is ProjectReportsUiState.Success -> {
+            Button(
+                onClick = { viewModel.reportDelegate.openReportFormDialog() },
+                Modifier.padding(20.dp),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text("Create Report", fontSize = 14.sp)
+            }
+            ReportsListView(
+                state.data,
+                viewModel.userId,
+                viewModel.reportDelegate::openReportFormDialog,
+                viewModel.reportDelegate::openDeleteReportDialog
+            )
+        }
+    }
+}
+
+@Composable
+fun ReportsListView(
+    reports: List<ReportRes>,
+    userId: String?,
+    onOpenReportFormDialog: (report: ReportRes) -> Unit,
+    onOpenDeleteReportDialog: (reportId: String) -> Unit,
+) {
+    if (reports.isEmpty()) Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) { Text(text = "No Data") } else LazyColumn(
+        Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(20.dp)) }
+        items(reports) { report ->
+            Column(
+                Modifier.shadow(10.dp, shape = RoundedCornerShape(12.dp))
+                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                var expanded by remember { mutableStateOf(false) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        report.user.name,
+                        fontWeight = FontWeight.Bold,
+                        color = if (!report.user.isActive) Color.Gray else Color.Black
+                    )
+                    if (!report.user.isActive) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "(Deactivated)", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        Instant.fromEpochMilliseconds(report.createdAt).toLocalDateTime(TimeZone.currentSystemDefault())
+                            .format(LocalDateTime.Format {
+                                hour(); char(':'); minute(); char(' ')
+                                dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
+                                chars(", "); day(); chars(" ")
+                                monthName(names = MonthNames.ENGLISH_ABBREVIATED)
+                                chars(" "); year()
+                            }),
+                        fontSize = 10.sp, color = Color.Gray,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    if (userId == report.user.id) {
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert, contentDescription = "More options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                                    expanded = false
+                                    onOpenReportFormDialog(report)
+                                })
+                                DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                                    expanded = false
+                                    onOpenDeleteReportDialog(report.id)
+                                })
+                            }
+                        }
+                    }
+                }
+                Text(
+                    report.user.division?.name ?: report.user.role.name,
+                    fontSize = 10.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(report.project.name, fontSize = 14.sp)
+                Text(report.detail)
+            }
+        }
+        item { Spacer(modifier = Modifier.height(20.dp)) }
     }
 }

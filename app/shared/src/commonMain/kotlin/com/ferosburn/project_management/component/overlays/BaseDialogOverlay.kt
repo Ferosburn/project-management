@@ -2,9 +2,11 @@ package com.ferosburn.project_management.component.overlays
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -22,7 +24,11 @@ fun BaseDialogOverlay(
         Column(
             modifier ?: Modifier.padding(20.dp).widthIn(max = 400.dp).fillMaxWidth()
                 .shadow(10.dp, shape = RoundedCornerShape(10.dp))
-                .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp),
+                .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(20.dp).clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) { content() }
     }

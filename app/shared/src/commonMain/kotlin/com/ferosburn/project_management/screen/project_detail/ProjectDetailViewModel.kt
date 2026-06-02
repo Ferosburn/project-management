@@ -1,16 +1,16 @@
 package com.ferosburn.project_management.screen.project_detail
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ferosburn.project_management.models.report.ReportCreateReq
+import com.ferosburn.project_management.models.report.ReportFilter
+import com.ferosburn.project_management.models.report.ReportUpdateReq
 import com.ferosburn.project_management.models.task.TaskCreateReq
-import com.ferosburn.project_management.models.task.TaskRes
 import com.ferosburn.project_management.models.task.TaskUpdateReq
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
+import com.ferosburn.project_management.network.ReportApi
 import com.ferosburn.project_management.network.TaskApi
 import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.delay
@@ -24,117 +24,55 @@ class ProjectDetailViewModel : ViewModel() {
     private val _uiStates = MutableStateFlow(ProjectDetailUiState())
     val uiStates = _uiStates.asStateFlow()
     val currentRole = LocalStorage.readUserRole()
+    val userId = LocalStorage.readUserId()
     val isManager = currentRole != null && currentRole == UserRole.MANAGER
-    var name by mutableStateOf("")
-    var description by mutableStateOf("")
-    var nameError by mutableStateOf<String?>(null)
-    var descriptionError by mutableStateOf<String?>(null)
-    var showCreateTaskDialog by mutableStateOf(false)
-    var isEditTask by mutableStateOf(false)
-    var currentTaskId by mutableStateOf<String?>(null)
-    var currentParentId by mutableStateOf<String?>(null)
-    var currentRootParentId by mutableStateOf<String?>(null)
-    var showDeleteDialog by mutableStateOf(false)
-    var tabExpanded by mutableStateOf(false)
-
-    private fun validateForm(): Boolean {
-        nameError = when {
-            name.isBlank() -> "name is required"
-            else -> null
-        }
-        descriptionError = when {
-            description.isBlank() -> "description is required"
-            else -> null
-        }
-        return listOf(nameError, descriptionError).all { it.isNullOrBlank() }
-    }
+    val taskDelegate = ProjectTaskDelegate()
+    val tabDelegate = ProjectTabDelegate()
+    val reportDelegate = ProjectReportDelegate()
 
     fun init(projectId: String, isExpanded: Boolean) {
         getProjectDetail(projectId = projectId)
         getAllTasks(projectId = projectId)
-        updateTabs(setOf(ProjectDetailTab.REPORTS))
-        if (isExpanded) {
-            setSelectedTab(ProjectDetailTab.REPORTS)
-        }
-    }
-
-    fun onNameChange(value: String) {
-        name = value
-        nameError = null
-    }
-
-    fun onDescriptionChange(value: String) {
-        description = value
-        descriptionError = null
-    }
-
-    fun openCreateTaskDialog(parentId: String, rootParentId: String) {
-        isEditTask = false
-        showCreateTaskDialog = true
-        currentParentId = parentId
-        currentRootParentId = rootParentId
-    }
-
-    fun openEditTaskDialog(task: TaskRes) {
-        isEditTask = true
-        showCreateTaskDialog = true
-        name = task.name
-        description = task.description
-        currentTaskId = task.id
-    }
-
-    fun closeCreateTaskDialog() {
-        name = ""
-        nameError = null
-        description = ""
-        descriptionError = null
-        showCreateTaskDialog = false
-        currentTaskId = null
-        currentParentId = null
-        currentRootParentId = null
-    }
-
-    fun openDeleteTaskDialog(taskId: String) {
-        showDeleteDialog = true
-        currentTaskId = taskId
-    }
-
-    fun closeDeleteTaskDialog() {
-        showDeleteDialog = false
+        tabDelegate.updateTabs(
+            tabs = setOf(ProjectDetailTab.REPORTS),
+            activeTab = if (isExpanded) ProjectDetailTab.REPORTS else null,
+        )
     }
 
     fun openTaskDetail(projectId: String, taskId: String) {
-        val tabs = _uiStates.value.tabs
-        updateTabs(listOf(tabs, listOf(ProjectDetailTab.DETAIL)).flatten().toSet())
-        setSelectedTab(ProjectDetailTab.DETAIL)
-        tabExpanded = true
-        currentTaskId = taskId
+        val tabs = tabDelegate.state.value.tabs
+        tabDelegate.updateTabs(
+            tabs = listOf(tabs, listOf(ProjectDetailTab.DETAIL)).flatten().toSet(),
+            activeTab = ProjectDetailTab.DETAIL,
+            expanded = true,
+        )
+        taskDelegate.updateCurrentTaskId(taskId)
         getTaskDetail(projectId)
     }
 
-    fun updateTabs(tabs: Set<ProjectDetailTab>) {
-        _uiStates.update { it.copy(tabs = tabs) }
+    fun closeTaskDetail(isWindowExpanded: Boolean) {
+        tabDelegate.updateTabs(
+            tabs = tabDelegate.state.value.tabs.filter { tab -> tab != ProjectDetailTab.DETAIL }.toSet(),
+            activeTab = if (isWindowExpanded) ProjectDetailTab.REPORTS else null,
+        )
+        taskDelegate.updateCurrentTaskId(null)
     }
 
-    fun setSelectedTab(tab: ProjectDetailTab?) {
-        _uiStates.update { it.copy(selectedTab = tab) }
-    }
-
-    suspend fun <T> handleManageTaskState(
-        response: NetworkResult<T>, projectId: String, action: () -> Unit
+    suspend fun <T> handleOverlayState(
+        response: NetworkResult<T>, mainAction: () -> Unit, action: () -> Unit
     ) {
         when (response) {
             is NetworkResult.Success -> {
                 action()
-                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Success) }
-                getAllTasks(projectId)
+                _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Success) }
+                mainAction()
             }
 
             is NetworkResult.Error -> {
                 action()
-                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Failed(response.message)) }
+                _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Failed(response.message)) }
                 delay(3.seconds)
-                _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Initial) }
+                _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Initial) }
             }
         }
     }
@@ -169,12 +107,13 @@ class ProjectDetailViewModel : ViewModel() {
 
     fun getTaskDetail(projectId: String) {
         viewModelScope.launch {
+            val currentTaskId = taskDelegate.state.value.currentTaskId
             if (currentTaskId.isNullOrBlank()) {
                 _uiStates.update { it.copy(task = TaskDetailUiState.Failed("taskId is required")) }
                 return@launch
             }
             _uiStates.update { it.copy(task = TaskDetailUiState.Loading) }
-            when (val response = TaskApi.getTask(projectId, currentTaskId!!)) {
+            when (val response = TaskApi.getTask(projectId, currentTaskId)) {
                 is NetworkResult.Error -> _uiStates.update { it.copy(task = TaskDetailUiState.Failed(response.message)) }
                 is NetworkResult.Success -> {
                     response.data.data?.let { data ->
@@ -186,47 +125,95 @@ class ProjectDetailViewModel : ViewModel() {
     }
 
     fun createTask(projectId: String) {
-        if (!validateForm()) return
+        if (!taskDelegate.validateForm()) return
         viewModelScope.launch {
-            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
+            val taskState = taskDelegate.state.value
             val response = TaskApi.createTask(
                 projectId,
                 TaskCreateReq(
-                    name = name,
-                    description = description,
-                    parentId = currentParentId,
-                    rootParentId = currentRootParentId
+                    name = taskState.name,
+                    description = taskState.description,
+                    parentId = taskState.currentParentId,
+                    rootParentId = taskState.currentRootParentId
                 ),
             )
-            handleManageTaskState(response, projectId, ::closeCreateTaskDialog)
+            handleOverlayState(response, { getAllTasks(projectId) }, taskDelegate::closeTaskFormDialog)
         }
     }
 
     fun updateTask(projectId: String) {
-        if (!validateForm()) return
+        if (!taskDelegate.validateForm()) return
         viewModelScope.launch {
-            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
+            val taskState = taskDelegate.state.value
             val response = TaskApi.updateTask(
                 projectId,
-                currentTaskId!!,
+                taskState.currentTaskId!!,
                 TaskUpdateReq(
-                    name = name,
-                    description = description,
+                    name = taskState.name,
+                    description = taskState.description,
                 ),
             )
-            handleManageTaskState(response, projectId, ::closeCreateTaskDialog)
+            handleOverlayState(response, { getAllTasks(projectId) }, taskDelegate::closeTaskFormDialog)
         }
     }
 
     fun deleteTask(projectId: String) {
-        closeDeleteTaskDialog()
+        taskDelegate.closeDeleteTaskDialog()
         viewModelScope.launch {
-            _uiStates.update { it.copy(taskCreate = TaskCreateUiState.Loading) }
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
             val response = TaskApi.deleteTask(
                 projectId,
-                currentTaskId!!,
+                taskDelegate.state.value.currentTaskId!!,
             )
-            handleManageTaskState(response, projectId) { currentTaskId = null }
+            handleOverlayState(response, { getAllTasks(projectId) }) { taskDelegate.updateCurrentTaskId(null) }
+        }
+    }
+
+    fun getReports(projectId: String) {
+        viewModelScope.launch {
+            _uiStates.update { it.copy(reports = ProjectReportsUiState.Loading) }
+            when (val response = ReportApi.getAllReports(ReportFilter(projectId = projectId))) {
+                is NetworkResult.Error -> _uiStates.update { it.copy(reports = ProjectReportsUiState.Failed(response.message)) }
+                is NetworkResult.Success -> {
+                    response.data.data?.let { data ->
+                        _uiStates.update { it.copy(reports = ProjectReportsUiState.Success(data)) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun createReport(projectId: String) {
+        if (!reportDelegate.validateForm()) return
+        viewModelScope.launch {
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
+            val response = ReportApi.createReport(
+                ReportCreateReq(projectId = projectId, detail = reportDelegate.state.value.detail)
+            )
+            handleOverlayState(response, { getReports(projectId) }, reportDelegate::closeReportFormDialog)
+        }
+    }
+
+    fun updateReport(projectId: String) {
+        if (!reportDelegate.validateForm()) return
+        viewModelScope.launch {
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
+            val reportState = reportDelegate.state.value
+            val response = ReportApi.updateReport(
+                reportState.currentReportId!!, ReportUpdateReq(detail = reportDelegate.state.value.detail)
+            )
+            handleOverlayState(response, { getReports(projectId) }, reportDelegate::closeReportFormDialog)
+        }
+    }
+
+    fun deleteReport(projectId: String) {
+        reportDelegate.closeDeleteReportDialog()
+        viewModelScope.launch {
+            _uiStates.update { it.copy(reports = ProjectReportsUiState.Loading) }
+            val response = ReportApi.deleteReport(reportDelegate.state.value.currentReportId!!)
+            handleOverlayState(response, { getReports(projectId) }, { reportDelegate.updateCurrentReportId(null) })
         }
     }
 }
