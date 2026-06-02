@@ -50,7 +50,7 @@ class ReportRepository : ReportsRepositoryInterface {
         ReportsTable.innerJoin(ProjectsTable, { ReportsTable.projectId }, { ProjectsTable.id })
             .innerJoin(UsersTable, { ReportsTable.userId }, { UsersTable.id }).selectAll().apply {
                 val projectId = filter.projectId?.let { runCatching { Uuid.parse(it) }.getOrNull() }
-                projectId?.let { andWhere { ReportsTable.id eq projectId } }
+                projectId?.let { andWhere { ReportsTable.projectId eq projectId } }
                 limit(filter.limit)
                 offset(((filter.page - 1) * filter.limit).toLong())
                 orderBy(ReportsTable.id to SortOrder.DESC)
