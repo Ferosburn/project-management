@@ -3,6 +3,7 @@
 package com.ferosburn.project_management.routes
 
 import com.ferosburn.project_management.models.ApiResponse
+import com.ferosburn.project_management.models.Pagination
 import com.ferosburn.project_management.models.report.ReportCreateReq
 import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportUpdateReq
@@ -14,6 +15,8 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import kotlin.math.ceil
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -21,13 +24,19 @@ fun Route.reportRoutes(reportRepository: ReportRepository) {
     authenticate("jwt") {
         route("/reports") {
             get {
+                val limit = call.request.queryParameters["limit"]?.toInt() ?: 10
+                val page = call.request.queryParameters["page"]?.toInt() ?: 1
                 val filter = ReportFilter(
-                    limit = call.request.queryParameters["limit"]?.toInt() ?: 10,
-                    page = call.request.queryParameters["page"]?.toInt() ?: 1,
-                    projectId = call.request.queryParameters["projectId"]
+                    limit = limit, page = page, projectId = call.request.queryParameters["projectId"]
                 )
-                val reports = reportRepository.getAll(filter)
-                call.respond(HttpStatusCode.OK, ApiResponse.success(reports))
+                val (reports, totalData) = transaction { reportRepository.getAll(filter) }
+                val pagination = Pagination(
+                    totalData = totalData.toInt(),
+                    page = page,
+                    perPage = limit,
+                    totalPage = if (totalData <= 0) 1 else ceil(totalData.toDouble() / limit).toInt(),
+                )
+                call.respond(HttpStatusCode.OK, ApiResponse.success(reports, pagination))
             }
             get("/me") {
                 val principal = call.principal<JWTPrincipal>()!!

@@ -10,12 +10,14 @@ data class ApiResponse<T>(
     val message: String,
     val data: T? = null,
     val errors: List<String>? = null,
+    val pagination: Pagination? = null,
 ) {
     companion object {
-        fun <T> success(data: T) = ApiResponse(
+        fun <T> success(data: T, pagination: Pagination? = null) = ApiResponse(
             HttpStatusCode.OK.value,
             HttpStatusCode.OK.description,
             data,
+            pagination = pagination,
         )
 
         fun <T> created(data: T) = ApiResponse(
@@ -61,3 +63,13 @@ data class ApiResponse<T>(
         )
     }
 }
+
+@Serializable
+data class Pagination(
+    val totalData: Int,
+    val page: Int,
+    val perPage: Int,
+    val totalPage: Int,
+)
+
+data class PageableResult<T>(val items: List<T>, val totalCount: Long)

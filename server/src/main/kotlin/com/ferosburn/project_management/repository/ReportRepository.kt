@@ -2,6 +2,7 @@
 
 package com.ferosburn.project_management.repository
 
+import com.ferosburn.project_management.models.PageableResult
 import com.ferosburn.project_management.models.ProjectsTable
 import com.ferosburn.project_management.models.ReportsTable
 import com.ferosburn.project_management.models.UsersTable
@@ -46,15 +47,18 @@ class ReportRepository : ReportsRepositoryInterface {
         )
     }
 
-    override fun getAll(filter: ReportFilter): List<ReportRes> = transaction {
-        ReportsTable.innerJoin(ProjectsTable, { ReportsTable.projectId }, { ProjectsTable.id })
-            .innerJoin(UsersTable, { ReportsTable.userId }, { UsersTable.id }).selectAll().apply {
-                val projectId = filter.projectId?.let { runCatching { Uuid.parse(it) }.getOrNull() }
-                projectId?.let { andWhere { ReportsTable.projectId eq projectId } }
-                limit(filter.limit)
-                offset(((filter.page - 1) * filter.limit).toLong())
-                orderBy(ReportsTable.id to SortOrder.DESC)
-            }.map { mapToReportRes(it) }
+    override fun getAll(filter: ReportFilter): PageableResult<ReportRes> {
+        val query = ReportsTable.innerJoin(ProjectsTable, { ReportsTable.projectId }, { ProjectsTable.id })
+            .innerJoin(UsersTable, { ReportsTable.userId }, { UsersTable.id }).selectAll()
+        val projectId = filter.projectId?.let { runCatching { Uuid.parse(it) }.getOrNull() }
+        projectId?.let { query.andWhere { ReportsTable.projectId eq projectId } }
+        val totalCount = query.count()
+        val reports = query.apply {
+            limit(filter.limit)
+            offset(((filter.page - 1) * filter.limit).toLong())
+            orderBy(ReportsTable.id to SortOrder.DESC)
+        }.map { mapToReportRes(it) }
+        return PageableResult(reports, totalCount)
     }
 
     override fun getAllByUserId(
