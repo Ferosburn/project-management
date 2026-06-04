@@ -43,7 +43,7 @@ class ReportsViewModel : ViewModel() {
     var countDownFinished by mutableStateOf(false)
 
     val getPagedReports: Flow<PagingData<ReportRes>> = Pager(
-        config = PagingConfig(3, enablePlaceholders = false), pagingSourceFactory = {
+        config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false), pagingSourceFactory = {
             AppPagingSource { page, limit -> ReportApi.getAllReports(ReportFilter(limit, page)) }
         }).flow.cachedIn(viewModelScope)
 

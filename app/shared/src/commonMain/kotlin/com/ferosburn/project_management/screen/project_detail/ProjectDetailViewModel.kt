@@ -2,8 +2,13 @@ package com.ferosburn.project_management.screen.project_detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.ferosburn.project_management.models.report.ReportCreateReq
 import com.ferosburn.project_management.models.report.ReportFilter
+import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskUpdateReq
@@ -12,8 +17,10 @@ import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
 import com.ferosburn.project_management.network.ReportApi
 import com.ferosburn.project_management.network.TaskApi
+import com.ferosburn.project_management.paging.AppPagingSource
 import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,6 +36,7 @@ class ProjectDetailViewModel : ViewModel() {
     val taskDelegate = ProjectTaskDelegate()
     val tabDelegate = ProjectTabDelegate()
     val reportDelegate = ProjectReportDelegate()
+    private var currentPagingSource: AppPagingSource<ReportRes>? = null
 
     fun init(projectId: String, isExpanded: Boolean) {
         getProjectDetail(projectId = projectId)
@@ -171,19 +179,12 @@ class ProjectDetailViewModel : ViewModel() {
         }
     }
 
-    fun getReports(projectId: String) {
-        viewModelScope.launch {
-            _uiStates.update { it.copy(reports = ProjectReportsUiState.Loading) }
-            when (val response = ReportApi.getAllReports(ReportFilter(projectId = projectId))) {
-                is NetworkResult.Error -> _uiStates.update { it.copy(reports = ProjectReportsUiState.Failed(response.message)) }
-                is NetworkResult.Success -> {
-                    response.data.data?.let { data ->
-                        _uiStates.update { it.copy(reports = ProjectReportsUiState.Success(data)) }
-                    }
-                }
-            }
-        }
-    }
+    fun getPagedReports(projectId: String): Flow<PagingData<ReportRes>> = Pager(
+        config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false), pagingSourceFactory = {
+            AppPagingSource { page, limit ->
+                ReportApi.getAllReports(ReportFilter(limit, page, projectId))
+            }.also { currentPagingSource = it }
+        }).flow.cachedIn(viewModelScope)
 
     fun createReport(projectId: String) {
         if (!reportDelegate.validateForm()) return
@@ -192,11 +193,11 @@ class ProjectDetailViewModel : ViewModel() {
             val response = ReportApi.createReport(
                 ReportCreateReq(projectId = projectId, detail = reportDelegate.state.value.detail)
             )
-            handleOverlayState(response, { getReports(projectId) }, reportDelegate::closeReportFormDialog)
+            handleOverlayState(response, { currentPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog)
         }
     }
 
-    fun updateReport(projectId: String) {
+    fun updateReport() {
         if (!reportDelegate.validateForm()) return
         viewModelScope.launch {
             _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
@@ -204,16 +205,20 @@ class ProjectDetailViewModel : ViewModel() {
             val response = ReportApi.updateReport(
                 reportState.currentReportId!!, ReportUpdateReq(detail = reportDelegate.state.value.detail)
             )
-            handleOverlayState(response, { getReports(projectId) }, reportDelegate::closeReportFormDialog)
+            handleOverlayState(response, { currentPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog)
         }
     }
 
-    fun deleteReport(projectId: String) {
+    fun deleteReport() {
         reportDelegate.closeDeleteReportDialog()
         viewModelScope.launch {
             _uiStates.update { it.copy(reports = ProjectReportsUiState.Loading) }
             val response = ReportApi.deleteReport(reportDelegate.state.value.currentReportId!!)
-            handleOverlayState(response, { getReports(projectId) }, { reportDelegate.updateCurrentReportId(null) })
+            handleOverlayState(
+                response,
+                { currentPagingSource?.invalidate() },
+                { reportDelegate.updateCurrentReportId(null) },
+            )
         }
     }
 }

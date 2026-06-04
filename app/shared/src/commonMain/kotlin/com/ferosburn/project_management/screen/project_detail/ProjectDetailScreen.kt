@@ -83,7 +83,7 @@ fun ProjectDetailScreen(
                     Button(
                         onClick = {
                             if (reportManageState.isEdit) {
-                                viewModel.updateReport(projectId)
+                                viewModel.updateReport()
                             } else {
                                 viewModel.createReport(projectId)
                             }
@@ -177,7 +177,7 @@ fun ProjectDetailScreen(
                 title = "Delete Report Permanently?",
                 description = "You can not reverse this action!",
                 onClose = { viewModel.reportDelegate.closeDeleteReportDialog(true) },
-                onDelete = { viewModel.deleteReport(projectId) }
+                onDelete = viewModel::deleteReport
             )
 
             if (taskManageState.showDeleteDialog) DeleteConfirmationDialog(

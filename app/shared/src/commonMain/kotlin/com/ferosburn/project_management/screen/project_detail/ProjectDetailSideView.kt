@@ -6,14 +6,15 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -24,16 +25,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ferosburn.project_management.models.report.ReportRes
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.ferosburn.project_management.component.pagination.PaginatedLazyColumn
+import com.ferosburn.project_management.component.report.ReportItem
 import com.ferosburn.project_management.utils.WindowSize
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.format.DayOfWeekNames
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun ProjectDetailSideView(
@@ -98,7 +93,7 @@ fun ProjectDetailSideView(
                     )
                 }
                 when (tabManageState.activeTab) {
-                    ProjectDetailTab.REPORTS -> ReportsTabView(projectId, viewModel, state.reports)
+                    ProjectDetailTab.REPORTS -> ReportsTabView(projectId, viewModel)
                     ProjectDetailTab.DETAIL -> TaskDetailTabView(state.task)
                     null -> {}
                 }
@@ -142,117 +137,26 @@ fun TaskDetailTabView(state: TaskDetailUiState) {
 fun ReportsTabView(
     projectId: String,
     viewModel: ProjectDetailViewModel,
-    state: ProjectReportsUiState,
 ) {
-    LaunchedEffect(Unit) { viewModel.getReports(projectId) }
+    val pagedReportFlow = remember { viewModel.getPagedReports(projectId) }
+    val lazyPagingItems = pagedReportFlow.collectAsLazyPagingItems()
 
-    when (state) {
-        is ProjectReportsUiState.Failed -> Box(
-            Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) { Text(text = state.message) }
-
-        ProjectReportsUiState.Loading -> Box(
-            Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) { CircularProgressIndicator() }
-
-        is ProjectReportsUiState.Success -> {
+    PaginatedLazyColumn(
+        lazyPagingItems, itemKey = { it.id },
+        header = {
             Button(
                 onClick = { viewModel.reportDelegate.openReportFormDialog() },
-                Modifier.padding(20.dp),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text("Create Report", fontSize = 14.sp)
             }
-            ReportsListView(
-                state.data,
-                viewModel.userId,
-                viewModel.reportDelegate::openReportFormDialog,
-                viewModel.reportDelegate::openDeleteReportDialog
-            )
-        }
-    }
-}
-
-@Composable
-fun ReportsListView(
-    reports: List<ReportRes>,
-    userId: String?,
-    onOpenReportFormDialog: (report: ReportRes) -> Unit,
-    onOpenDeleteReportDialog: (reportId: String) -> Unit,
-) {
-    if (reports.isEmpty()) Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) { Text(text = "No Data") } else LazyColumn(
-        Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item { Spacer(modifier = Modifier.height(20.dp)) }
-        items(reports) { report ->
-            Column(
-                Modifier.shadow(10.dp, shape = RoundedCornerShape(12.dp))
-                    .background(Color.White, shape = RoundedCornerShape(12.dp)).padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                var expanded by remember { mutableStateOf(false) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        report.user.name,
-                        fontWeight = FontWeight.Bold,
-                        color = if (!report.user.isActive) Color.Gray else Color.Black
-                    )
-                    if (!report.user.isActive) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "(Deactivated)", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        Instant.fromEpochMilliseconds(report.createdAt).toLocalDateTime(TimeZone.currentSystemDefault())
-                            .format(LocalDateTime.Format {
-                                hour(); char(':'); minute(); char(' ')
-                                dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-                                chars(", "); day(); chars(" ")
-                                monthName(names = MonthNames.ENGLISH_ABBREVIATED)
-                                chars(" "); year()
-                            }),
-                        fontSize = 10.sp, color = Color.Gray,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    if (userId == report.user.id) {
-                        Box {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert, contentDescription = "More options"
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = expanded, onDismissRequest = { expanded = false }) {
-                                DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                                    expanded = false
-                                    onOpenReportFormDialog(report)
-                                })
-                                DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                                    expanded = false
-                                    onOpenDeleteReportDialog(report.id)
-                                })
-                            }
-                        }
-                    }
-                }
-                Text(
-                    report.user.division?.name ?: report.user.role.name,
-                    fontSize = 10.sp,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(report.project.name, fontSize = 14.sp)
-                Text(report.detail)
-            }
-        }
-        item { Spacer(modifier = Modifier.height(20.dp)) }
+        },
+    ) { report ->
+        ReportItem(
+            viewModel.userId,
+            report,
+            viewModel.reportDelegate::openReportFormDialog,
+            viewModel.reportDelegate::openDeleteReportDialog
+        )
     }
 }
