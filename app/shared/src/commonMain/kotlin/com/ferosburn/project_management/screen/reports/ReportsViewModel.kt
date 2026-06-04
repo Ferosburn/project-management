@@ -5,15 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.report.ReportCreateReq
+import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
 import com.ferosburn.project_management.network.ReportApi
+import com.ferosburn.project_management.paging.AppPagingSource
 import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -34,6 +41,11 @@ class ReportsViewModel : ViewModel() {
     var currentReportId by mutableStateOf<String?>(null)
     var showDeleteDialog by mutableStateOf(false)
     var countDownFinished by mutableStateOf(false)
+
+    val getPagedReports: Flow<PagingData<ReportRes>> = Pager(
+        config = PagingConfig(3, enablePlaceholders = false), pagingSourceFactory = {
+            AppPagingSource { page, limit -> ReportApi.getAllReports(ReportFilter(limit, page)) }
+        }).flow.cachedIn(viewModelScope)
 
     private fun validateForm(): Boolean {
         detailError = when {
@@ -99,7 +111,6 @@ class ReportsViewModel : ViewModel() {
             is NetworkResult.Success -> {
                 action()
                 _uiState.update { it.copy(reportScreen = ReportsScreenUiState.Success) }
-                getAllReports()
             }
 
             is NetworkResult.Error -> {
@@ -107,22 +118,6 @@ class ReportsViewModel : ViewModel() {
                 _uiState.update { it.copy(reportScreen = ReportsScreenUiState.Failed(response.message)) }
                 delay(3.seconds)
                 _uiState.update { it.copy(reportScreen = ReportsScreenUiState.Initial) }
-            }
-        }
-    }
-
-    fun getAllReports() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(reports = ReportsUiState.Loading) }
-            when (val response = ReportApi.getAllReports()) {
-                is NetworkResult.Error -> _uiState.update { it.copy(reports = ReportsUiState.Failed(response.message)) }
-                is NetworkResult.Success -> _uiState.update {
-                    it.copy(
-                        reports = ReportsUiState.Success(
-                            response.data.data ?: emptyList()
-                        )
-                    )
-                }
             }
         }
     }
@@ -166,7 +161,7 @@ class ReportsViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(reportScreen = ReportsScreenUiState.Loading) }
             val response = ReportApi.deleteReport(currentReportId!!)
-            handleReportsScreenState(response) {currentReportId = null}
+            handleReportsScreenState(response) { currentReportId = null }
         }
     }
 }

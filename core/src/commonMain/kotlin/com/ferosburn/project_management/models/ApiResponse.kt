@@ -66,10 +66,10 @@ data class ApiResponse<T>(
 
 @Serializable
 data class Pagination(
-    val totalData: Int,
-    val page: Int,
-    val perPage: Int,
-    val totalPage: Int,
+    val totalData: Int = 0,
+    val page: Int = 1,
+    val perPage: Int = 10,
+    val totalPage: Int = 1,
 )
 
 data class PageableResult<T>(val items: List<T>, val totalCount: Long)
