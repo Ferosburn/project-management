@@ -181,7 +181,7 @@ class ProjectDetailViewModel : ViewModel() {
 
     fun getPagedReports(projectId: String): Flow<PagingData<ReportRes>> = Pager(
         config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false), pagingSourceFactory = {
-            AppPagingSource { page, limit ->
+            AppPagingSource { limit, page ->
                 ReportApi.getAllReports(ReportFilter(limit, page, projectId))
             }.also { currentPagingSource = it }
         }).flow.cachedIn(viewModelScope)

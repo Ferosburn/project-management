@@ -44,7 +44,7 @@ class ReportsViewModel : ViewModel() {
 
     val getPagedReports: Flow<PagingData<ReportRes>> = Pager(
         config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false), pagingSourceFactory = {
-            AppPagingSource { page, limit -> ReportApi.getAllReports(ReportFilter(limit, page)) }
+            AppPagingSource { limit, page -> ReportApi.getAllReports(ReportFilter(limit, page)) }
         }).flow.cachedIn(viewModelScope)
 
     private fun validateForm(): Boolean {
