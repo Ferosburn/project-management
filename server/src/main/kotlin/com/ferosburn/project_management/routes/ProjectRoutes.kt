@@ -10,24 +10,28 @@ import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.repository.ProjectRepository
 import com.ferosburn.project_management.utils.checkRole
 import com.ferosburn.project_management.utils.getUuidParameter
+import com.ferosburn.project_management.utils.respondPaginated
 import io.ktor.http.*
 import io.ktor.server.auth.*
-import io.ktor.server.request.receive
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.projectRoutes(projectRepository: ProjectRepository) {
     authenticate("jwt") {
         route("/projects") {
             get {
+                val limit = call.request.queryParameters["limit"]?.toInt() ?: 10
+                val page = call.request.queryParameters["page"]?.toInt() ?: 1
                 val filter = ProjectFilter(
-                    limit = call.request.queryParameters["limit"]?.toInt() ?: 10,
-                    page = call.request.queryParameters["page"]?.toInt() ?: 1,
+                    limit = limit,
+                    page = page,
                     isActive = call.request.queryParameters["isActive"]?.toBooleanStrictOrNull(),
                 )
-                val projects = projectRepository.getAll(filter)
-                call.respond(HttpStatusCode.OK, ApiResponse.success(projects))
+                val (projects, totalData) = transaction { projectRepository.getAll(filter) }
+                call.respondPaginated(projects, totalData, page, limit)
             }
             post {
                 if (!call.checkRole(UserRole.MANAGER)) return@post

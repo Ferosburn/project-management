@@ -2,6 +2,7 @@
 
 package com.ferosburn.project_management.repository
 
+import com.ferosburn.project_management.models.PageableResult
 import com.ferosburn.project_management.models.ProjectsTable
 import com.ferosburn.project_management.models.project.ProjectCreateReq
 import com.ferosburn.project_management.models.project.ProjectFilter
@@ -30,13 +31,16 @@ class ProjectRepository : ProjectRepositoryInterface {
         )
     }
 
-    override fun getAll(filter: ProjectFilter): List<ProjectRes> = transaction {
-        ProjectsTable.selectAll().apply {
-            filter.isActive?.let { andWhere { ProjectsTable.isActive eq it } }
+    override fun getAll(filter: ProjectFilter): PageableResult<ProjectRes> {
+        val query = ProjectsTable.selectAll()
+        filter.isActive?.let { query.andWhere { ProjectsTable.isActive eq it } }
+        val count = query.count()
+        val projects = query.apply {
             limit(filter.limit)
             offset(((filter.page - 1) * filter.limit).toLong())
             orderBy(ProjectsTable.id to SortOrder.DESC)
         }.map { mapToProjectRes(it) }
+        return PageableResult(projects, count)
     }
 
     override fun getById(id: Uuid): ProjectRes? = transaction {
