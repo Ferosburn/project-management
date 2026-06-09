@@ -8,12 +8,14 @@ import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.checkRole
 import com.ferosburn.project_management.utils.checkUserEligibility
 import com.ferosburn.project_management.utils.getUuidParameter
+import com.ferosburn.project_management.utils.respondPaginated
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -22,9 +24,11 @@ fun Route.userRoutes(userRepository: UserRepository) {
     authenticate("jwt") {
         route("/users") {
             get {
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+                val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                 val filter = UserFilter(
-                    limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10,
-                    page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1,
+                    limit = limit,
+                    page = page,
                     role = runCatching { call.request.queryParameters["role"]?.let { UserRole.valueOf(it) } }.getOrNull(),
                     division = call.request.queryParameters["division"]?.let { UserDivision.valueOf(it) },
                     isActive = call.request.queryParameters["isActive"]?.toBooleanStrictOrNull(),
@@ -32,8 +36,8 @@ fun Route.userRoutes(userRepository: UserRepository) {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
                 val role = principal.payload.getClaim("role").asString().let { UserRole.valueOf(it) }
-                val users = userRepository.getAll(filter, role, userId)
-                call.respond(HttpStatusCode.OK, ApiResponse.success(users))
+                val (users, totalData) = transaction { userRepository.getAll(filter, role, userId) }
+                call.respondPaginated(users, totalData, page, limit)
             }
             post {
                 if (!call.checkRole(UserRole.SUPERADMIN)) return@post

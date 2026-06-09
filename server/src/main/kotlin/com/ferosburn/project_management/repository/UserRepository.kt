@@ -2,6 +2,7 @@
 
 package com.ferosburn.project_management.repository
 
+import com.ferosburn.project_management.models.PageableResult
 import com.ferosburn.project_management.models.UsersTable
 import com.ferosburn.project_management.models.user.*
 import com.ferosburn.project_management.utils.BadRequestException
@@ -28,8 +29,8 @@ class UserRepository : UserRepositoryInterface {
         )
     }
 
-    override fun getAll(filter: UserFilter, userRole: UserRole, userId: Uuid): List<UserRes> = transaction {
-        UsersTable.selectAll().apply {
+    override fun getAll(filter: UserFilter, userRole: UserRole, userId: Uuid): PageableResult<UserRes> {
+        val query = UsersTable.selectAll().apply {
             when (userRole) {
                 UserRole.SUPERADMIN -> andWhere { UsersTable.id neq userId }
                 else -> andWhere { UsersTable.role neq UserRole.SUPERADMIN }
@@ -37,11 +38,15 @@ class UserRepository : UserRepositoryInterface {
             filter.role?.let { andWhere { UsersTable.role eq it } }
             filter.division?.let { andWhere { UsersTable.division eq it } }
             filter.isActive?.let { andWhere { UsersTable.isActive eq it } }
+        }
+        val totalCount = query.count()
+        val users = query.apply {
             limit(filter.limit)
             offset(((filter.page - 1) * filter.limit).toLong())
             orderBy(UsersTable.isActive to SortOrder.DESC)
             orderBy(UsersTable.name to SortOrder.ASC)
         }.map { mapToUserRes(it) }
+        return PageableResult(users, totalCount)
     }
 
     override fun getById(id: Uuid): UserRes? = transaction {
