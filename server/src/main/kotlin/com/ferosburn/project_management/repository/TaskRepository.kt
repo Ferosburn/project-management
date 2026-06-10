@@ -2,6 +2,7 @@
 
 package com.ferosburn.project_management.repository
 
+import com.ferosburn.project_management.models.PageableResult
 import com.ferosburn.project_management.models.TasksTable
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
@@ -43,20 +44,24 @@ class TaskRepository : TaskRepositoryInterface {
         }
     }
 
-    override fun getAllByProjectId(projectId: Uuid, filter: TaskFilter): List<TaskRes> = transaction {
-        val rootTasks = TasksTable.selectAll().apply {
-            orderBy(TasksTable.id to SortOrder.DESC)
+    override fun getAllByProjectId(projectId: Uuid, filter: TaskFilter): PageableResult<TaskRes> {
+        val query = TasksTable.selectAll().apply {
             andWhere { TasksTable.projectId eq projectId }
             andWhere { TasksTable.parentId.isNull() }
+        }
+        val totalCount = query.count()
+        query.apply {
             offset(((filter.page - 1) * filter.limit).toLong())
             limit(filter.limit)
+            orderBy(TasksTable.id to SortOrder.DESC)
         }
-        val rootIds = rootTasks.map { it[TasksTable.id] }
+        val rootIds = query.map { it[TasksTable.id] }
         val descendants =
             TasksTable.selectAll().where { TasksTable.rootParentId inList rootIds }.map { mapToTaskRes(it) }
-        rootTasks.map { mapToTaskRes(it) }.map { root ->
+        val tasks = query.map { mapToTaskRes(it) }.map { root ->
             root.copy(tasks = buildTaskTree(descendants, root.id))
         }
+        return PageableResult(tasks, totalCount)
     }
 
     override fun getById(taskId: Uuid): TaskRes? = transaction {

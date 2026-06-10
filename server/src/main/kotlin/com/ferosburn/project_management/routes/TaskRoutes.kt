@@ -10,6 +10,7 @@ import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.repository.TaskRepository
 import com.ferosburn.project_management.utils.checkRole
 import com.ferosburn.project_management.utils.getUuidParameter
+import com.ferosburn.project_management.utils.respondPaginated
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
@@ -20,19 +21,19 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
 
 fun Route.taskRoutes(taskRepository: TaskRepository) {
     authenticate("jwt") {
         route("/tasks/{projectId}") {
             get {
-                val filter = TaskFilter(
-                    limit = call.request.queryParameters["limit"]?.toInt() ?: 10,
-                    page = call.request.queryParameters["page"]?.toInt() ?: 1,
-                )
+                val limit = call.request.queryParameters["limit"]?.toInt() ?: 10
+                val page = call.request.queryParameters["page"]?.toInt() ?: 1
+                val filter = TaskFilter(limit = limit, page = page)
                 val projectId = call.getUuidParameter("projectId") ?: return@get
-                val tasks = taskRepository.getAllByProjectId(projectId, filter)
-                call.respond(HttpStatusCode.OK, ApiResponse.success(tasks))
+                val (tasks, totalData) = transaction { taskRepository.getAllByProjectId(projectId, filter) }
+                call.respondPaginated(tasks, totalData, page, limit)
             }
             post {
                 if (!call.checkRole(UserRole.MANAGER)) return@post
