@@ -29,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 fun ProjectDetailScreen(
     projectId: String,
     onBack: () -> Unit,
+    onUserClick: (userId: String) -> Unit,
 ) {
     val viewModel = remember { ProjectDetailViewModel() }
     val state by viewModel.uiStates.collectAsStateWithLifecycle()
@@ -57,7 +58,8 @@ fun ProjectDetailScreen(
                     viewModel,
                     tabManageState,
                     state,
-                    windowSize
+                    windowSize,
+                    onUserClick,
                 )
             }
 
@@ -222,7 +224,8 @@ fun ProjectDetailScreen(
                             viewModel,
                             tabManageState,
                             state,
-                            windowSize
+                            windowSize,
+                            onUserClick
                         )
                     }
 
@@ -236,7 +239,8 @@ fun ProjectDetailScreen(
                             viewModel,
                             tabManageState,
                             state,
-                            windowSize
+                            windowSize,
+                            onUserClick
                         )
                     }
                 }

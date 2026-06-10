@@ -99,6 +99,7 @@ private fun EntryProviderScope<AppRoute>.screens(
         ProjectDetailScreen(
             projectId = it.projectId,
             onBack = onBack,
+            onUserClick = { userId -> navigator.add(ContributorDetailScreen(userId)) },
         )
     }
     entry<ReportsScreen> {

@@ -14,6 +14,8 @@ import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
 import com.ferosburn.project_management.models.task.TaskRes
 import com.ferosburn.project_management.models.task.TaskUpdateReq
+import com.ferosburn.project_management.models.user.UserFilter
+import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
 import com.ferosburn.project_management.network.ProjectApi
@@ -44,7 +46,7 @@ class ProjectDetailViewModel : ViewModel() {
     fun init(projectId: String, isExpanded: Boolean) {
         getProjectDetail(projectId = projectId)
         tabDelegate.updateTabs(
-            tabs = setOf(ProjectDetailTab.REPORTS),
+            tabs = setOf(ProjectDetailTab.REPORTS, ProjectDetailTab.CONTRIBUTORS),
             activeTab = if (isExpanded) ProjectDetailTab.REPORTS else null,
         )
     }
@@ -100,6 +102,13 @@ class ProjectDetailViewModel : ViewModel() {
             }
         }
     }
+
+    fun getPagedContributors(projectId: String): Flow<PagingData<UserRes>> = Pager(
+        config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+        pagingSourceFactory = {
+            AppPagingSource { limit, page -> ProjectApi.getProjectContributors(projectId, UserFilter(limit, page)) }
+        },
+    ).flow.cachedIn(viewModelScope)
 
     fun getPagedTasks(projectId: String): Flow<PagingData<TaskRes>> = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),

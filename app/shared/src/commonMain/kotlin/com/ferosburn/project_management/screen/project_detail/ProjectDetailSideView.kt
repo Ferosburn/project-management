@@ -38,6 +38,7 @@ fun ProjectDetailSideView(
     tabManageState: ProjectTabManageStates,
     state: ProjectDetailUiState,
     windowSize: WindowSize,
+    onUserClick: (userId: String) -> Unit
 ) {
     fun Modifier.contentWidth(): Modifier {
         return when (windowSize) {
@@ -95,6 +96,7 @@ fun ProjectDetailSideView(
                 when (tabManageState.activeTab) {
                     ProjectDetailTab.REPORTS -> ReportsTabView(projectId, viewModel)
                     ProjectDetailTab.DETAIL -> TaskDetailTabView(state.task)
+                    ProjectDetailTab.CONTRIBUTORS -> ContributorsTabView(projectId, viewModel, onUserClick)
                     null -> {}
                 }
             }
@@ -158,5 +160,33 @@ fun ReportsTabView(
             viewModel.reportDelegate::openReportFormDialog,
             viewModel.reportDelegate::openDeleteReportDialog
         )
+    }
+}
+
+@Composable
+fun ContributorsTabView(
+    projectId: String,
+    viewModel: ProjectDetailViewModel,
+    onUserClick: (userId: String) -> Unit,
+) {
+    val pagedContributorFlow = remember { viewModel.getPagedContributors(projectId) }
+    val lazyPagingItems = pagedContributorFlow.collectAsLazyPagingItems()
+
+    PaginatedLazyColumn(lazyPagingItems, itemKey = { it.id }) { user ->
+        Row(
+            Modifier.clickable(onClick = { onUserClick(user.id) }),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(user.name)
+            Spacer(Modifier.weight(1f))
+            Text(
+                user.division?.name ?: user.role.name,
+                fontSize = 10.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (user.isActive) "Active" else "Inactive")
+        }
     }
 }

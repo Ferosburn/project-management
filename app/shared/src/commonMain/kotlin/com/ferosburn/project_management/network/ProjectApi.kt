@@ -5,6 +5,8 @@ import com.ferosburn.project_management.models.project.ProjectCreateReq
 import com.ferosburn.project_management.models.project.ProjectFilter
 import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.project.ProjectUpdateReq
+import com.ferosburn.project_management.models.user.UserFilter
+import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.utils.setQueryParams
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -25,6 +27,14 @@ object ProjectApi : ProjectApiInterface {
         safeApiCall(true) { token ->
             client.get("/projects/$projectId") {
                 bearerAuth(token)
+            }.body()
+        }
+
+    override suspend fun getProjectContributors(projectId: String, filter: UserFilter): NetworkResult<ApiResponse<List<UserRes>>> =
+        safeApiCall(true) { token ->
+            client.get("/projects/$projectId/contributors") {
+                bearerAuth(token)
+                setQueryParams(filter)
             }.body()
         }
 
