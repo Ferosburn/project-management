@@ -13,11 +13,11 @@ import io.ktor.http.*
 object UserApi : UserApiInterface {
     private val client = KtorClient.client
 
-    override suspend fun getAllUsers(params: UserFilter): NetworkResult<ApiResponse<List<UserRes>>> =
+    override suspend fun getAllUsers(filter: UserFilter): NetworkResult<ApiResponse<List<UserRes>>> =
         safeApiCall(true) { token ->
             client.get("/users") {
                 bearerAuth(token)
-                setQueryParams(params)
+                setQueryParams(filter)
             }.body()
         }
 
