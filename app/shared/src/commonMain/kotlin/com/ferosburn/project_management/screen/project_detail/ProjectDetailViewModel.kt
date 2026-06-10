@@ -11,6 +11,8 @@ import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
 import com.ferosburn.project_management.models.task.TaskCreateReq
+import com.ferosburn.project_management.models.task.TaskFilter
+import com.ferosburn.project_management.models.task.TaskRes
 import com.ferosburn.project_management.models.task.TaskUpdateReq
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.network.NetworkResult
@@ -36,11 +38,11 @@ class ProjectDetailViewModel : ViewModel() {
     val taskDelegate = ProjectTaskDelegate()
     val tabDelegate = ProjectTabDelegate()
     val reportDelegate = ProjectReportDelegate()
-    private var currentPagingSource: AppPagingSource<ReportRes>? = null
+    private var currentReportPagingSource: AppPagingSource<ReportRes>? = null
+    private var currentTaskPagingSource: AppPagingSource<TaskRes>? = null
 
     fun init(projectId: String, isExpanded: Boolean) {
         getProjectDetail(projectId = projectId)
-        getAllTasks(projectId = projectId)
         tabDelegate.updateTabs(
             tabs = setOf(ProjectDetailTab.REPORTS),
             activeTab = if (isExpanded) ProjectDetailTab.REPORTS else null,
@@ -99,19 +101,14 @@ class ProjectDetailViewModel : ViewModel() {
         }
     }
 
-    fun getAllTasks(projectId: String) {
-        viewModelScope.launch {
-            _uiStates.update { it.copy(tasks = TasksUiState.Loading) }
-            when (val response = TaskApi.getAllTasks(projectId)) {
-                is NetworkResult.Error -> _uiStates.update { it.copy(tasks = TasksUiState.Failed(response.message)) }
-                is NetworkResult.Success -> {
-                    response.data.data?.let { data ->
-                        _uiStates.update { it.copy(tasks = TasksUiState.Success(data)) }
-                    }
-                }
+    fun getPagedTasks(projectId: String): Flow<PagingData<TaskRes>> = Pager(
+        config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+        pagingSourceFactory = {
+            AppPagingSource { limit, page -> TaskApi.getAllTasks(projectId, TaskFilter(limit, page)) }.also {
+                currentTaskPagingSource = it
             }
-        }
-    }
+        },
+    ).flow.cachedIn(viewModelScope)
 
     fun getTaskDetail(projectId: String) {
         viewModelScope.launch {
@@ -146,7 +143,7 @@ class ProjectDetailViewModel : ViewModel() {
                     rootParentId = taskState.currentRootParentId
                 ),
             )
-            handleOverlayState(response, { getAllTasks(projectId) }, taskDelegate::closeTaskFormDialog)
+            handleOverlayState(response, { currentTaskPagingSource?.invalidate() }, taskDelegate::closeTaskFormDialog)
         }
     }
 
@@ -163,7 +160,7 @@ class ProjectDetailViewModel : ViewModel() {
                     description = taskState.description,
                 ),
             )
-            handleOverlayState(response, { getAllTasks(projectId) }, taskDelegate::closeTaskFormDialog)
+            handleOverlayState(response, { currentTaskPagingSource?.invalidate() }, taskDelegate::closeTaskFormDialog)
         }
     }
 
@@ -175,16 +172,20 @@ class ProjectDetailViewModel : ViewModel() {
                 projectId,
                 taskDelegate.state.value.currentTaskId!!,
             )
-            handleOverlayState(response, { getAllTasks(projectId) }) { taskDelegate.updateCurrentTaskId(null) }
+            handleOverlayState(
+                response, { currentTaskPagingSource?.invalidate() }, { taskDelegate.updateCurrentTaskId(null) },
+            )
         }
     }
 
     fun getPagedReports(projectId: String): Flow<PagingData<ReportRes>> = Pager(
-        config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false), pagingSourceFactory = {
+        config = PagingConfig(pageSize = 10, initialLoadSize = 10, enablePlaceholders = false),
+        pagingSourceFactory = {
             AppPagingSource { limit, page ->
                 ReportApi.getAllReports(ReportFilter(limit, page, projectId))
-            }.also { currentPagingSource = it }
-        }).flow.cachedIn(viewModelScope)
+            }.also { currentReportPagingSource = it }
+        },
+    ).flow.cachedIn(viewModelScope)
 
     fun createReport(projectId: String) {
         if (!reportDelegate.validateForm()) return
@@ -193,7 +194,9 @@ class ProjectDetailViewModel : ViewModel() {
             val response = ReportApi.createReport(
                 ReportCreateReq(projectId = projectId, detail = reportDelegate.state.value.detail)
             )
-            handleOverlayState(response, { currentPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog)
+            handleOverlayState(
+                response, { currentReportPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog
+            )
         }
     }
 
@@ -205,7 +208,9 @@ class ProjectDetailViewModel : ViewModel() {
             val response = ReportApi.updateReport(
                 reportState.currentReportId!!, ReportUpdateReq(detail = reportDelegate.state.value.detail)
             )
-            handleOverlayState(response, { currentPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog)
+            handleOverlayState(
+                response, { currentReportPagingSource?.invalidate() }, reportDelegate::closeReportFormDialog
+            )
         }
     }
 
@@ -216,7 +221,7 @@ class ProjectDetailViewModel : ViewModel() {
             val response = ReportApi.deleteReport(reportDelegate.state.value.currentReportId!!)
             handleOverlayState(
                 response,
-                { currentPagingSource?.invalidate() },
+                { currentReportPagingSource?.invalidate() },
                 { reportDelegate.updateCurrentReportId(null) },
             )
         }

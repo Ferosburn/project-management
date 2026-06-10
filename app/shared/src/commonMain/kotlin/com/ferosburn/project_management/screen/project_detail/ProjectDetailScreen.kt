@@ -1,8 +1,6 @@
 package com.ferosburn.project_management.screen.project_detail
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,11 +13,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.ferosburn.project_management.component.misc.SimpleCountDown
 import com.ferosburn.project_management.component.overlays.BaseConfirmationDialog
 import com.ferosburn.project_management.component.overlays.BaseDialogOverlay
 import com.ferosburn.project_management.component.overlays.ErrorPopUp
 import com.ferosburn.project_management.component.overlays.LoadingOverlay
+import com.ferosburn.project_management.component.pagination.PaginatedLazyColumn
 import com.ferosburn.project_management.component.scaffold.AppScaffold2
 import com.ferosburn.project_management.utils.LocalWindowSize
 import com.ferosburn.project_management.utils.WindowSize
@@ -297,11 +297,14 @@ private fun MainContent(
     viewModel: ProjectDetailViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val pagedTask = remember { viewModel.getPagedTasks(projectId) }
+    val lazyPagingItems = pagedTask.collectAsLazyPagingItems()
     val project = (state.projectData as ProjectDataUiState.Success).data
-    LazyColumn(
-        modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
+    PaginatedLazyColumn(
+        lazyPagingItems,
+        modifier = modifier,
+        itemKey = { it.id },
+        header = {
             Spacer(Modifier.height(20.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -316,49 +319,16 @@ private fun MainContent(
             Spacer(Modifier.height(8.dp))
             Text(project.description, textAlign = TextAlign.Justify)
             Spacer(Modifier.height(20.dp))
-        }
-        when (state.tasks) {
-            is TasksUiState.Failed -> item {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
+            if (viewModel.isManager) {
+                Button(
+                    onClick = { viewModel.taskDelegate.openCreateTaskDialog() },
+                    shape = RoundedCornerShape(12.dp),
                 ) {
-                    Text(text = state.tasks.message)
-                }
-            }
-
-            TasksUiState.Loading -> item {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is TasksUiState.Success -> {
-                val tasks = state.tasks.data
-                if (viewModel.isManager) item {
-                    Button(
-                        onClick = { viewModel.taskDelegate.openCreateTaskDialog() },
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Text("Create New Task", fontSize = 14.sp)
-                    }
-                }
-                if (tasks.isEmpty()) item {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { Text("No Data") }
-                } else {
-                    item { Spacer(Modifier.height(8.dp)) }
-                    items(tasks) { task ->
-                        TaskItem(task, projectId, viewModel, state)
-                    }
-                    item { Spacer(Modifier.height(20.dp)) }
+                    Text("Create New Task", fontSize = 14.sp)
                 }
             }
         }
+    ) { task ->
+        TaskItem(task, projectId, viewModel, state)
     }
 }

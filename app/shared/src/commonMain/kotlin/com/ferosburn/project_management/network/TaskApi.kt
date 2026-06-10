@@ -5,6 +5,7 @@ import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
 import com.ferosburn.project_management.models.task.TaskRes
 import com.ferosburn.project_management.models.task.TaskUpdateReq
+import com.ferosburn.project_management.utils.setQueryParams
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
@@ -23,6 +24,7 @@ object TaskApi : TaskApiInterface {
     ): NetworkResult<ApiResponse<List<TaskRes>>> = safeApiCall(true) { token ->
         client.get("/tasks/$projectId") {
             bearerAuth(token)
+            setQueryParams(filter)
         }.body()
     }
 

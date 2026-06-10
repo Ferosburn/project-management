@@ -7,7 +7,6 @@ import com.ferosburn.project_management.models.task.TaskRes
 
 data class ProjectDetailUiState(
     val projectData: ProjectDataUiState = ProjectDataUiState.Loading,
-    val tasks: TasksUiState = TasksUiState.Loading,
     val overlay: ProjectDetailOverlayUiState = ProjectDetailOverlayUiState.Initial,
     val reports: ProjectReportsUiState = ProjectReportsUiState.Loading,
     val task: TaskDetailUiState = TaskDetailUiState.Loading,
@@ -24,12 +23,6 @@ sealed interface ProjectDataUiState {
     data object Loading : ProjectDataUiState
     data class Success(val data: ProjectRes) : ProjectDataUiState
     data class Failed(val message: String) : ProjectDataUiState
-}
-
-sealed interface TasksUiState {
-    data object Loading : TasksUiState
-    data class Success(val data: List<TaskRes>) : TasksUiState
-    data class Failed(val message: String) : TasksUiState
 }
 
 sealed interface ProjectReportsUiState {
