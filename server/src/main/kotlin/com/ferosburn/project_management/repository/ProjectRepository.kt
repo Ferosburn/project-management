@@ -43,6 +43,13 @@ class ProjectRepository : ProjectRepositoryInterface {
         return PageableResult(projects, count)
     }
 
+    override fun getAllActiveUnpaginated(): List<ProjectRes> {
+        return ProjectsTable.selectAll().apply {
+            andWhere { ProjectsTable.isActive eq true }
+            orderBy(ProjectsTable.name)
+        }.map { mapToProjectRes(it) }
+    }
+
     override fun getById(id: Uuid): ProjectRes? = transaction {
         ProjectsTable.selectAll().where { ProjectsTable.id eq id }.map { mapToProjectRes(it) }.firstOrNull()
     }

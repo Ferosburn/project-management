@@ -30,8 +30,13 @@ fun Route.projectRoutes(projectRepository: ProjectRepository) {
                     page = page,
                     isActive = call.request.queryParameters["isActive"]?.toBooleanStrictOrNull(),
                 )
-                val (projects, totalData) = transaction { projectRepository.getAll(filter) }
-                call.respondPaginated(projects, totalData, page, limit)
+                if (limit == -1) {
+                    val projects = transaction { projectRepository.getAllActiveUnpaginated() }
+                    call.respond(HttpStatusCode.OK, ApiResponse.success(projects))
+                } else {
+                    val (projects, totalData) = transaction { projectRepository.getAll(filter) }
+                    call.respondPaginated(projects, totalData, page, limit)
+                }
             }
             post {
                 if (!call.checkRole(UserRole.MANAGER)) return@post
