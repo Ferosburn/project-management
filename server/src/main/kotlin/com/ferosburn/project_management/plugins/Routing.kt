@@ -29,7 +29,7 @@ fun Application.configureRouting(
         }
         userRoutes(userRepository)
         authRoutes(authRepository)
-        projectRoutes(projectRepository)
+        projectRoutes(projectRepository, userRepository)
         taskRoutes(taskRepository)
         reportRoutes(reportRepository)
     }

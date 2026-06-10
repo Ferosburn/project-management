@@ -3,6 +3,7 @@
 package com.ferosburn.project_management.repository
 
 import com.ferosburn.project_management.models.PageableResult
+import com.ferosburn.project_management.models.ReportsTable
 import com.ferosburn.project_management.models.UsersTable
 import com.ferosburn.project_management.models.user.*
 import com.ferosburn.project_management.utils.BadRequestException
@@ -10,7 +11,9 @@ import com.ferosburn.project_management.utils.InternalServerException
 import com.ferosburn.project_management.utils.PasswordUtils
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -46,6 +49,18 @@ class UserRepository : UserRepositoryInterface {
             orderBy(UsersTable.isActive to SortOrder.DESC)
             orderBy(UsersTable.name to SortOrder.ASC)
         }.map { mapToUserRes(it) }
+        return PageableResult(users, totalCount)
+    }
+
+    override fun getContributors(projectId: Uuid, filter: UserFilter): PageableResult<UserRes> {
+        val totalCount = UsersTable.innerJoin(ReportsTable, { UsersTable.id }, { ReportsTable.userId })
+            .select(UsersTable.id.countDistinct()).where { ReportsTable.projectId eq projectId }
+            .single()[UsersTable.id.countDistinct()]
+        val users =
+            UsersTable.innerJoin(ReportsTable, { UsersTable.id }, { ReportsTable.userId }).select(UsersTable.columns)
+                .withDistinct().where { ReportsTable.projectId eq projectId }.limit(filter.limit)
+                .offset(((filter.page - 1) * filter.limit).toLong()).orderBy(UsersTable.isActive to SortOrder.DESC)
+                .orderBy(UsersTable.name to SortOrder.ASC).map { mapToUserRes(it) }
         return PageableResult(users, totalCount)
     }
 

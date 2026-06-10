@@ -6,8 +6,10 @@ import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.project.ProjectCreateReq
 import com.ferosburn.project_management.models.project.ProjectFilter
 import com.ferosburn.project_management.models.project.ProjectUpdateReq
+import com.ferosburn.project_management.models.user.UserFilter
 import com.ferosburn.project_management.models.user.UserRole
 import com.ferosburn.project_management.repository.ProjectRepository
+import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.utils.checkRole
 import com.ferosburn.project_management.utils.getUuidParameter
 import com.ferosburn.project_management.utils.respondPaginated
@@ -19,7 +21,7 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
 
-fun Route.projectRoutes(projectRepository: ProjectRepository) {
+fun Route.projectRoutes(projectRepository: ProjectRepository, userRepository: UserRepository) {
     authenticate("jwt") {
         route("/projects") {
             get {
@@ -56,6 +58,14 @@ fun Route.projectRoutes(projectRepository: ProjectRepository) {
                         HttpStatusCode.NotFound, ApiResponse.notFound()
                     )
                     call.respond(HttpStatusCode.OK, ApiResponse.success(project))
+                }
+                get("/contributors") {
+                    val uuid = call.getUuidParameter("id") ?: return@get
+                    val limit = call.request.queryParameters["limit"]?.toInt() ?: 10
+                    val page = call.request.queryParameters["page"]?.toInt() ?: 1
+                    val filter = UserFilter(limit, page)
+                    val (contributors, totalData) = transaction { userRepository.getContributors(uuid, filter) }
+                    call.respondPaginated(contributors, totalData, page, limit)
                 }
                 patch {
                     if (!call.checkRole(UserRole.MANAGER)) return@patch

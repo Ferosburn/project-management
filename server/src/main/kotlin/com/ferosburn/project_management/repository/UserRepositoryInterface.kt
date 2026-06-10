@@ -9,6 +9,7 @@ import kotlin.uuid.Uuid
 
 interface UserRepositoryInterface {
     fun getAll(filter: UserFilter = UserFilter(), userRole: UserRole, userId: Uuid): PageableResult<UserRes>
+    fun getContributors(projectId: Uuid, filter: UserFilter = UserFilter()): PageableResult<UserRes>
     fun getById(id: Uuid): UserRes?
     fun create(data: UserCreateReq): UserRes
     fun update(id: Uuid, data: UserUpdateReq): UserRes?
