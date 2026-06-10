@@ -9,6 +9,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.ferosburn.project_management.models.project.ProjectFilter
 import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.report.ReportCreateReq
 import com.ferosburn.project_management.models.report.ReportFilter
@@ -125,7 +126,7 @@ class ReportsViewModel : ViewModel() {
     fun getAllProjects() {
         viewModelScope.launch {
             _uiState.update { it.copy(projects = ReportProjectsUiState.Loading) }
-            when (val response = ProjectApi.getAllProjects()) {
+            when (val response = ProjectApi.getAllProjects(ProjectFilter(limit = -1))) {
                 is NetworkResult.Error -> _uiState.update { it.copy(projects = ReportProjectsUiState.Failed(response.message)) }
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(
