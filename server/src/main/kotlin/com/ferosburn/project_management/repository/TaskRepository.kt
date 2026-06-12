@@ -7,7 +7,9 @@ import com.ferosburn.project_management.models.TasksTable
 import com.ferosburn.project_management.models.task.TaskCreateReq
 import com.ferosburn.project_management.models.task.TaskFilter
 import com.ferosburn.project_management.models.task.TaskRes
+import com.ferosburn.project_management.models.task.TaskStatus
 import com.ferosburn.project_management.models.task.TaskUpdateReq
+import com.ferosburn.project_management.utils.BadRequestException
 import com.ferosburn.project_management.utils.InternalServerException
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.andWhere
@@ -85,6 +87,8 @@ class TaskRepository : TaskRepositoryInterface {
         val rowsUpdated = TasksTable.update({ TasksTable.id eq taskId }) { row ->
             data.name?.let { row[TasksTable.name] = it }
             data.description?.let { row[TasksTable.description] = it }
+            val status = runCatching { data.status?.let { TaskStatus.valueOf(it) } }.getOrNull() ?: throw BadRequestException("invalid status")
+            status.let { row[TasksTable.status] = it }
         }
         if (rowsUpdated == 0) null else getById(taskId)
     }
