@@ -10,10 +10,7 @@ import com.ferosburn.project_management.models.report.ReportCreateReq
 import com.ferosburn.project_management.models.report.ReportFilter
 import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.report.ReportUpdateReq
-import com.ferosburn.project_management.models.task.TaskCreateReq
-import com.ferosburn.project_management.models.task.TaskFilter
-import com.ferosburn.project_management.models.task.TaskRes
-import com.ferosburn.project_management.models.task.TaskUpdateReq
+import com.ferosburn.project_management.models.task.*
 import com.ferosburn.project_management.models.user.UserFilter
 import com.ferosburn.project_management.models.user.UserRes
 import com.ferosburn.project_management.models.user.UserRole
@@ -170,6 +167,20 @@ class ProjectDetailViewModel : ViewModel() {
                 ),
             )
             handleOverlayState(response, { currentTaskPagingSource?.invalidate() }, taskDelegate::closeTaskFormDialog)
+        }
+    }
+
+    fun updateTaskStatus(projectId: String, taskId: String, newStatus: TaskStatus, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiStates.update { it.copy(overlay = ProjectDetailOverlayUiState.Loading) }
+            val response = TaskApi.updateTask(
+                projectId,
+                taskId,
+                TaskUpdateReq(
+                    status = newStatus.name,
+                ),
+            )
+            handleOverlayState(response, { onSuccess() }, { })
         }
     }
 
