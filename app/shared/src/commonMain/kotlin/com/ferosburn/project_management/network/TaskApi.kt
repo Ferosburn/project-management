@@ -47,7 +47,7 @@ object TaskApi : TaskApiInterface {
 
     override suspend fun updateTask(
         projectId: String, taskId: String, data: TaskUpdateReq
-    ): NetworkResult<ApiResponse<TaskRes>> = safeApiCall { token ->
+    ): NetworkResult<ApiResponse<TaskRes>> = safeApiCall(true) { token ->
         client.patch("/tasks/$projectId/$taskId") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
@@ -56,7 +56,7 @@ object TaskApi : TaskApiInterface {
     }
 
     override suspend fun deleteTask(projectId: String, taskId: String): NetworkResult<ApiResponse<TaskRes>> =
-        safeApiCall { token ->
+        safeApiCall(true) { token ->
             client.delete("/tasks/$projectId/$taskId") {
                 bearerAuth(token)
             }.body()
