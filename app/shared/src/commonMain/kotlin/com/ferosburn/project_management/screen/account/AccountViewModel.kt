@@ -4,41 +4,52 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferosburn.project_management.network.AuthApi
 import com.ferosburn.project_management.network.NetworkResult
+import com.ferosburn.project_management.network.ProfileApi
 import com.ferosburn.project_management.storage.LocalStorage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 class AccountViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<AccountUiState>(AccountUiState.Initial)
+    private val _uiState = MutableStateFlow(AccountScreenStates())
     val uiState = _uiState.asStateFlow()
 
-    fun logout() {
-        viewModelScope.launch {
-            _uiState.value = AccountUiState.Loading
-            when (val response = AuthApi.logout()) {
-                is NetworkResult.Success -> {
-                    LocalStorage.deleteTokenRes()
-                    _uiState.value = AccountUiState.SuccessLogout
-                }
+    suspend fun <T> handleOverlayState(response: NetworkResult<T>, action: () -> Unit = {}) {
+        when (response) {
+            is NetworkResult.Success -> {
+                action()
+                _uiState.update { it.copy(overlay = AccountOverlayUiState.SuccessLogout) }
+            }
 
-                is NetworkResult.Error -> _uiState.value = AccountUiState.Failed(response.message)
+            is NetworkResult.Error -> {
+                action()
+                _uiState.update { it.copy(overlay = AccountOverlayUiState.Failed(response.message)) }
+                delay(3.seconds)
+                _uiState.update { it.copy(overlay = AccountOverlayUiState.Initial) }
             }
         }
     }
 
-    fun checkToken() {
+    fun getUserProfile() {
         viewModelScope.launch {
-            val response = AuthApi.checkToken()
-            when (response) {
-                is NetworkResult.Success -> {
-                    println("Check token success")
-                }
-
-                is NetworkResult.Error -> {
-                    println("Check token failed")
+            _uiState.update { it.copy(profile = AccountDataUiState.Loading) }
+            when (val response = ProfileApi.getUserProfile()) {
+                is NetworkResult.Error -> _uiState.update { it.copy(profile = AccountDataUiState.Failed(response.message)) }
+                is NetworkResult.Success -> response.data.data?.let { data ->
+                    _uiState.update { it.copy(profile = AccountDataUiState.Success(data)) }
                 }
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(overlay = AccountOverlayUiState.Loading) }
+            val response = AuthApi.logout()
+            handleOverlayState(response, { LocalStorage.deleteTokenRes() })
         }
     }
 }
