@@ -6,6 +6,7 @@ import com.ferosburn.project_management.repository.ReportRepository
 import com.ferosburn.project_management.repository.TaskRepository
 import com.ferosburn.project_management.repository.UserRepository
 import com.ferosburn.project_management.routes.authRoutes
+import com.ferosburn.project_management.routes.profileRoutes
 import com.ferosburn.project_management.routes.projectRoutes
 import com.ferosburn.project_management.routes.reportRoutes
 import com.ferosburn.project_management.routes.taskRoutes
@@ -32,5 +33,6 @@ fun Application.configureRouting(
         projectRoutes(projectRepository, userRepository)
         taskRoutes(taskRepository)
         reportRoutes(reportRepository)
+        profileRoutes(userRepository)
     }
 }
