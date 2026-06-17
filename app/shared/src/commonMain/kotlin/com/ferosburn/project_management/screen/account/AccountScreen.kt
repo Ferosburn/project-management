@@ -2,22 +2,13 @@ package com.ferosburn.project_management.screen.account
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,9 +29,7 @@ fun AccountScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var editExpanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.getUserProfile()
-    }
+    LaunchedEffect(Unit) { viewModel.init() }
 
     LaunchedEffect(state.overlay) {
         if (state.overlay is AccountOverlayUiState.SuccessLogout) {
@@ -90,7 +79,9 @@ fun AccountScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
 
-            is AccountDataUiState.Success -> Column(Modifier.padding(20.dp)) {
+            is AccountDataUiState.Success -> Column(
+                Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
                 val profileData = profileState.data
                 Row {
                     Column(Modifier.weight(1f)) {
@@ -138,6 +129,29 @@ fun AccountScreen(
                     ) {
                         InfoTooltipBox("Logout") {
                             Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = Color.Red)
+                        }
+                    }
+                }
+                when (val projectsState = state.projects) {
+                    is AccountProjectsUiState.Failed -> {}
+                    AccountProjectsUiState.Loading -> Box(
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
+
+                    is AccountProjectsUiState.Success -> {
+                        val projects = projectsState.data
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Contributed Projects",
+                                fontWeight = FontWeight.Bold,
+                            )
+                            projects.forEach { project ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.Circle, contentDescription = null, Modifier.size(8.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(project.name, Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }

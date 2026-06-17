@@ -1,9 +1,11 @@
 package com.ferosburn.project_management.screen.account
 
+import com.ferosburn.project_management.models.project.ProjectRes
 import com.ferosburn.project_management.models.user.UserRes
 
 data class AccountScreenStates(
     val profile: AccountDataUiState = AccountDataUiState.Loading,
+    val projects: AccountProjectsUiState = AccountProjectsUiState.Loading,
     val overlay: AccountOverlayUiState = AccountOverlayUiState.Initial,
 )
 
@@ -18,4 +20,10 @@ sealed interface AccountDataUiState {
     data object Loading : AccountDataUiState
     data class Success(val data: UserRes) : AccountDataUiState
     data class Failed(val message: String) : AccountDataUiState
+}
+
+sealed interface AccountProjectsUiState {
+    data object Loading : AccountProjectsUiState
+    data class Success(val data: List<ProjectRes>) : AccountProjectsUiState
+    data class Failed(val message: String) : AccountProjectsUiState
 }

@@ -17,6 +17,11 @@ class AccountViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AccountScreenStates())
     val uiState = _uiState.asStateFlow()
 
+    fun init() {
+        getUserProfile()
+        getContributedProjects()
+    }
+
     suspend fun <T> handleOverlayState(response: NetworkResult<T>, action: () -> Unit = {}) {
         when (response) {
             is NetworkResult.Success -> {
@@ -40,6 +45,18 @@ class AccountViewModel : ViewModel() {
                 is NetworkResult.Error -> _uiState.update { it.copy(profile = AccountDataUiState.Failed(response.message)) }
                 is NetworkResult.Success -> response.data.data?.let { data ->
                     _uiState.update { it.copy(profile = AccountDataUiState.Success(data)) }
+                }
+            }
+        }
+    }
+
+    fun getContributedProjects() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(projects = AccountProjectsUiState.Loading) }
+            when (val response = ProfileApi.getContributedProjects()) {
+                is NetworkResult.Error -> _uiState.update { it.copy(projects = AccountProjectsUiState.Failed(response.message)) }
+                is NetworkResult.Success -> response.data.data?.let { data ->
+                    _uiState.update { it.copy(projects = AccountProjectsUiState.Success(data)) }
                 }
             }
         }
