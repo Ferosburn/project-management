@@ -13,6 +13,7 @@ import kotlin.uuid.Uuid
 interface ProjectRepositoryInterface {
     fun getAll(filter: ProjectFilter = ProjectFilter()): PageableResult<ProjectRes>
     fun getAllActiveUnpaginated(): List<ProjectRes>
+    fun getAllContributedProjects(userId: Uuid): List<ProjectRes>
     fun getById(id: Uuid): ProjectRes?
     fun create(data: ProjectCreateReq): ProjectRes
     fun update(id: Uuid, data: ProjectUpdateReq): ProjectRes?

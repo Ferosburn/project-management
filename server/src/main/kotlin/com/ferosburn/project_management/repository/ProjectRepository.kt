@@ -4,6 +4,7 @@ package com.ferosburn.project_management.repository
 
 import com.ferosburn.project_management.models.PageableResult
 import com.ferosburn.project_management.models.ProjectsTable
+import com.ferosburn.project_management.models.ReportsTable
 import com.ferosburn.project_management.models.project.ProjectCreateReq
 import com.ferosburn.project_management.models.project.ProjectFilter
 import com.ferosburn.project_management.models.project.ProjectRes
@@ -12,9 +13,11 @@ import com.ferosburn.project_management.utils.InternalServerException
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -48,6 +51,13 @@ class ProjectRepository : ProjectRepositoryInterface {
             andWhere { ProjectsTable.isActive eq true }
             orderBy(ProjectsTable.name)
         }.map { mapToProjectRes(it) }
+    }
+
+    override fun getAllContributedProjects(userId: Uuid): List<ProjectRes> {
+        return ReportsTable.innerJoin(ProjectsTable, { ReportsTable.projectId }, { ProjectsTable.id })
+            .select(ProjectsTable.columns).withDistinct().where { ReportsTable.userId eq userId }
+            .orderBy(ProjectsTable.isActive to SortOrder.DESC, ProjectsTable.name to SortOrder.ASC)
+            .map { mapToProjectRes(it) }
     }
 
     override fun getById(id: Uuid): ProjectRes? = transaction {

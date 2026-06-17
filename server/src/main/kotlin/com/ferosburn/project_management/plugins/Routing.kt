@@ -25,14 +25,12 @@ fun Application.configureRouting(
     reportRepository: ReportRepository,
 ) {
     routing {
-        get("/") {
-            call.respondText("Welcome to the project", ContentType.Text.Html)
-        }
+        get("/") { call.respondText("Welcome! Please use the proper routes.", ContentType.Text.Html) }
         userRoutes(userRepository)
         authRoutes(authRepository)
         projectRoutes(projectRepository, userRepository)
         taskRoutes(taskRepository)
         reportRoutes(reportRepository)
-        profileRoutes(userRepository)
+        profileRoutes(userRepository, projectRepository)
     }
 }
