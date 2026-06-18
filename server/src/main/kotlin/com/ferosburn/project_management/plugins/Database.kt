@@ -6,6 +6,8 @@ import com.ferosburn.project_management.models.RefreshTokensTable
 import com.ferosburn.project_management.models.ReportsTable
 import com.ferosburn.project_management.models.TasksTable
 import com.ferosburn.project_management.models.UsersTable
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -16,13 +18,19 @@ fun initDatabase() {
     val dbName = System.getenv("POSTGRES_DB") ?: error("POSTGRES_DB environment variable not set")
     val dbHost = System.getenv("DB_HOST") ?: error("DB_HOST environment variable not set")
     val dbPort = System.getenv("DB_PORT") ?: error("DB_PORT environment variable not set")
+    val config = HikariConfig().apply {
+        driverClassName = "org.postgresql.Driver"
+        jdbcUrl = "jdbc:postgresql://$dbHost:$dbPort/$dbName"
+        username = user
+        this.password = password
+        maximumPoolSize = 3
+        isAutoCommit = false
+        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+        validate()
+    }
+    val dataSource = HikariDataSource(config)
 
-    Database.connect(
-        url = "jdbc:postgresql://$dbHost:$dbPort/$dbName",
-        driver = "org.postgresql.Driver",
-        user = user,
-        password = password,
-    )
+    Database.connect(dataSource)
     transaction {
         SchemaUtils.create(UsersTable, RefreshTokensTable, ProjectsTable, TasksTable, ReportsTable)
         SchemaUtils.addMissingColumnsStatements(
