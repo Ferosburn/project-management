@@ -3,10 +3,9 @@ package com.ferosburn.project_management.screen.account
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferosburn.project_management.models.project.ProjectFilter
-import com.ferosburn.project_management.network.AuthApi
-import com.ferosburn.project_management.network.NetworkResult
-import com.ferosburn.project_management.network.ProfileApi
-import com.ferosburn.project_management.network.ProjectApi
+import com.ferosburn.project_management.models.report.ReportCreateReq
+import com.ferosburn.project_management.models.report.ReportUpdateReq
+import com.ferosburn.project_management.network.*
 import com.ferosburn.project_management.storage.LocalStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,11 +26,15 @@ class AccountViewModel : ViewModel() {
         getUserReports()
     }
 
-    suspend fun <T> handleOverlayState(response: NetworkResult<T>, action: () -> Unit = {}) {
+    suspend fun <T> handleOverlayState(response: NetworkResult<T>, action: () -> Unit = {}, isLogout: Boolean = false) {
         when (response) {
             is NetworkResult.Success -> {
                 action()
-                _uiState.update { it.copy(overlay = AccountOverlayUiState.SuccessLogout) }
+                _uiState.update {
+                    it.copy(
+                        overlay = if (isLogout) AccountOverlayUiState.SuccessLogout else AccountOverlayUiState.Success
+                    )
+                }
             }
 
             is NetworkResult.Error -> {
@@ -91,6 +94,31 @@ class AccountViewModel : ViewModel() {
                     it.copy(reports = AccountReportsUiState.Success(response.data.data ?: emptyList()))
                 }
             }
+        }
+    }
+
+    fun createUserReport() {
+        if (!reportsDelegate.validateForm()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(overlay = AccountOverlayUiState.Loading) }
+            val response = ReportApi.createReport(
+                ReportCreateReq(
+                    projectId = reportsDelegate.state.value.project!!.id, detail = reportsDelegate.state.value.detail
+                )
+            )
+            handleOverlayState(response, reportsDelegate::closeFormDialog)
+        }
+    }
+
+    fun updateUserReport() {
+        if (!reportsDelegate.validateForm()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(overlay = AccountOverlayUiState.Loading) }
+            val response = ReportApi.updateReport(
+                reportsDelegate.state.value.currentReportId!!,
+                ReportUpdateReq(detail = reportsDelegate.state.value.detail),
+            )
+            handleOverlayState(response, reportsDelegate::closeFormDialog)
         }
     }
 

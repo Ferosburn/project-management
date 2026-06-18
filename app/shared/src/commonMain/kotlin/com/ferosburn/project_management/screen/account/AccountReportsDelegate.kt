@@ -16,7 +16,8 @@ class AccountReportsDelegate() {
         it.copy(project = value, projectError = null, projectDropdownExpanded = false)
     }
 
-    fun onProjectExpandChange() = _state.update { it.copy(projectDropdownExpanded = !it.projectDropdownExpanded) }
+    fun onProjectExpandChange(value: Boolean? = null) =
+        _state.update { it.copy(projectDropdownExpanded = value ?: !it.projectDropdownExpanded) }
 
     fun openFormDialog(report: ReportRes? = null) = _state.update {
         it.copy(

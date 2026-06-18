@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.ferosburn.project_management.screen.account
 
 import androidx.compose.animation.*
@@ -15,10 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ferosburn.project_management.component.overlays.BaseDialogOverlay
 import com.ferosburn.project_management.component.report.ReportItem
 import com.ferosburn.project_management.component.scaffold.AppScaffold2
 import com.ferosburn.project_management.component.tooltip.InfoTooltipBox
@@ -30,12 +35,16 @@ fun AccountScreen(
     val viewModel = remember { AccountViewModel() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var editExpanded by remember { mutableStateOf(false) }
+    val reportManageState by viewModel.reportsDelegate.state.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) { viewModel.init() }
 
     LaunchedEffect(state.overlay) {
-        if (state.overlay is AccountOverlayUiState.SuccessLogout) {
-            onLogoutSuccess()
+        when (state.overlay) {
+            AccountOverlayUiState.Success -> viewModel.init()
+            AccountOverlayUiState.SuccessLogout -> onLogoutSuccess()
+            else -> Unit
         }
     }
 
@@ -68,6 +77,110 @@ fun AccountScreen(
                 Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
+
+            if (reportManageState.showFormDialog) BaseDialogOverlay(
+                onClose = viewModel.reportsDelegate::closeFormDialog
+            ) {
+                LaunchedEffect(Unit) {
+                    viewModel.getAllProjects()
+                }
+
+                if (!reportManageState.isEdit) ExposedDropdownMenuBox(
+                    expanded = reportManageState.projectDropdownExpanded,
+                    onExpandedChange = { viewModel.reportsDelegate.onProjectExpandChange() },
+                ) {
+                    OutlinedTextField(
+                        value = reportManageState.project?.name ?: "",
+                        onValueChange = {},
+                        label = { Text("Project", fontSize = 12.sp) },
+                        supportingText = {
+                            if (!reportManageState.projectError.isNullOrBlank()) Text(
+                                text = reportManageState.projectError!!, fontSize = 12.sp
+                            )
+                        },
+                        isError = !reportManageState.projectError.isNullOrBlank(),
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = reportManageState.projectDropdownExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        textStyle = TextStyle(fontSize = 12.sp),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = reportManageState.projectDropdownExpanded,
+                        onDismissRequest = {
+                            viewModel.reportsDelegate.onProjectExpandChange(false)
+                            focusManager.clearFocus()
+                        },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Choose one", fontSize = 12.sp) },
+                            onClick = {
+                                viewModel.reportsDelegate.onProjectChange(null)
+                                focusManager.clearFocus()
+                            },
+                        )
+                        when (val projectListState = state.allProjects) {
+                            is AccountAllProjectsUiState.Success -> {
+                                val projects = projectListState.data
+                                projects.forEach { project ->
+                                    DropdownMenuItem(
+                                        text = { Text(project.name, fontSize = 12.sp) },
+                                        onClick = {
+                                            viewModel.reportsDelegate.onProjectChange(project)
+                                            focusManager.clearFocus()
+                                        },
+                                    )
+                                }
+                            }
+
+                            else -> Unit
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = reportManageState.detail,
+                    onValueChange = viewModel.reportsDelegate::onDetailChange,
+                    label = { Text("Detail", fontSize = 12.sp) },
+                    supportingText = {
+                        if (!reportManageState.detailError.isNullOrBlank()) Text(
+                            text = reportManageState.detailError!!, fontSize = 12.sp
+                        )
+                    },
+                    isError = !reportManageState.detailError.isNullOrBlank(),
+                    minLines = 3,
+                    maxLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(fontSize = 12.sp),
+                )
+                Row {
+                    Button(
+                        onClick = {
+                            if (reportManageState.isEdit) {
+                                viewModel.updateUserReport()
+                            } else {
+                                viewModel.createUserReport()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.LightGray,
+                            disabledContentColor = Color.Gray,
+                        )
+                    ) {
+                        Text("Save", fontSize = 14.sp)
+                    }
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(
+                        onClick = viewModel.reportsDelegate::closeFormDialog,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Cancel", fontSize = 14.sp)
+                    }
+                }
+            }
         },
     ) {
         when (val profileState = state.profile) {
@@ -176,10 +289,19 @@ fun AccountScreen(
                         val reports = reportsState.data
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(
-                                    "Recent Reports",
-                                    fontWeight = FontWeight.Bold,
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        "Recent Reports",
+                                        Modifier.weight(1f),
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Button(
+                                        onClick = { viewModel.reportsDelegate.openFormDialog() },
+                                        shape = RoundedCornerShape(12.dp),
+                                    ) {
+                                        Text("Create Report", fontSize = 14.sp)
+                                    }
+                                }
                                 reports.forEach { report ->
                                     ReportItem(
                                         userId = viewModel.userId,

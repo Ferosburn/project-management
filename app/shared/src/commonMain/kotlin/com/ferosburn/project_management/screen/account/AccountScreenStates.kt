@@ -15,6 +15,7 @@ data class AccountScreenStates(
 sealed interface AccountOverlayUiState {
     data object Initial : AccountOverlayUiState
     data object Loading : AccountOverlayUiState
+    data object Success : AccountOverlayUiState
     data object SuccessLogout : AccountOverlayUiState
     data class Failed(val message: String) : AccountOverlayUiState
 }
