@@ -122,6 +122,15 @@ class AccountViewModel : ViewModel() {
         }
     }
 
+    fun deleteUserReport() {
+        reportsDelegate.closeDeleteDialog()
+        viewModelScope.launch {
+            _uiState.update { it.copy(overlay = AccountOverlayUiState.Loading) }
+            val response = ReportApi.deleteReport(reportsDelegate.state.value.currentReportId!!)
+            handleOverlayState(response, {reportsDelegate.updateCurrentReportId(null)})
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             _uiState.update { it.copy(overlay = AccountOverlayUiState.Loading) }

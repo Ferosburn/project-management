@@ -24,9 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ferosburn.project_management.component.overlays.BaseDialogOverlay
+import com.ferosburn.project_management.component.overlays.ErrorPopUp
+import com.ferosburn.project_management.component.overlays.LoadingOverlay
 import com.ferosburn.project_management.component.report.ReportItem
 import com.ferosburn.project_management.component.scaffold.AppScaffold2
 import com.ferosburn.project_management.component.tooltip.InfoTooltipBox
+import com.ferosburn.project_management.screen.project_detail.DeleteConfirmationDialog
 
 @Composable
 fun AccountScreen(
@@ -72,11 +75,6 @@ fun AccountScreen(
                     }
                 }
             }
-
-            if (state.overlay is AccountOverlayUiState.Loading) Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
 
             if (reportManageState.showFormDialog) BaseDialogOverlay(
                 onClose = viewModel.reportsDelegate::closeFormDialog
@@ -181,6 +179,20 @@ fun AccountScreen(
                     }
                 }
             }
+
+            if (reportManageState.showDeleteDialog) DeleteConfirmationDialog(
+                title = "Delete Report Permanently?",
+                description = "You can not reverse this action!",
+                onClose = { viewModel.reportsDelegate.closeDeleteDialog(true) },
+                onDelete = viewModel::deleteUserReport
+            )
+
+            ErrorPopUp(
+                visible = state.overlay is AccountOverlayUiState.Failed,
+                message = (state.overlay as? AccountOverlayUiState.Failed)?.message ?: ""
+            )
+
+            if (state.overlay is AccountOverlayUiState.Loading) LoadingOverlay()
         },
     ) {
         when (val profileState = state.profile) {
