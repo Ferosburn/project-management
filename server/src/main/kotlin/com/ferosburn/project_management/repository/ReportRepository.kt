@@ -61,9 +61,7 @@ class ReportRepository : ReportsRepositoryInterface {
         return PageableResult(reports, totalCount)
     }
 
-    override fun getAllByUserId(
-        userId: Uuid, filter: ReportFilter
-    ): List<ReportRes> = transaction {
+    override fun getAllByUserId(userId: Uuid, filter: ReportFilter): List<ReportRes> = transaction {
         ReportsTable.innerJoin(ProjectsTable, { ReportsTable.projectId }, { ProjectsTable.id })
             .innerJoin(UsersTable, { ReportsTable.userId }, { UsersTable.id }).selectAll()
             .where { ReportsTable.userId eq userId }.apply {

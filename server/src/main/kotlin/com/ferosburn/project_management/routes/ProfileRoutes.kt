@@ -4,20 +4,22 @@ package com.ferosburn.project_management.routes
 
 import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.repository.ProjectRepository
+import com.ferosburn.project_management.repository.ReportRepository
 import com.ferosburn.project_management.repository.UserRepository
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.route
+import io.ktor.http.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-fun Route.profileRoutes(userRepository: UserRepository, projectRepository: ProjectRepository) {
+fun Route.profileRoutes(
+    userRepository: UserRepository,
+    projectRepository: ProjectRepository,
+    reportRepository: ReportRepository,
+) {
     authenticate("jwt") {
         route("/profile") {
             get {
@@ -33,6 +35,12 @@ fun Route.profileRoutes(userRepository: UserRepository, projectRepository: Proje
                 val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
                 val projects = transaction { projectRepository.getAllContributedProjects(userId) }
                 call.respond(HttpStatusCode.OK, ApiResponse.success(projects))
+            }
+            get("/reports") {
+                val principal = call.principal<JWTPrincipal>()!!
+                val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
+                val reports = reportRepository.getAllByUserId(userId)
+                call.respond(HttpStatusCode.OK, ApiResponse.success(reports))
             }
         }
     }

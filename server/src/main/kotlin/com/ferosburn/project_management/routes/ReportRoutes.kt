@@ -31,17 +31,6 @@ fun Route.reportRoutes(reportRepository: ReportRepository) {
                 val (reports, totalData) = transaction { reportRepository.getAll(filter) }
                 call.respondPaginated(reports, totalData, page, limit)
             }
-            get("/me") {
-                val principal = call.principal<JWTPrincipal>()!!
-                val userId = Uuid.parse(principal.payload.getClaim("userId").asString())
-                val filter = ReportFilter(
-                    limit = call.request.queryParameters["limit"]?.toInt() ?: 10,
-                    page = call.request.queryParameters["page"]?.toInt() ?: 1,
-                    projectId = call.request.queryParameters["projectId"]
-                )
-                val reports = reportRepository.getAllByUserId(userId, filter)
-                call.respond(HttpStatusCode.OK, ApiResponse.success(reports))
-            }
             post {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = Uuid.parse(principal.payload.getClaim("userId").asString())

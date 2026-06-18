@@ -12,7 +12,7 @@ import kotlin.uuid.Uuid
 
 interface ReportsRepositoryInterface {
     fun getAll(filter: ReportFilter): PageableResult<ReportRes>
-    fun getAllByUserId(userId: Uuid, filter: ReportFilter): List<ReportRes>
+    fun getAllByUserId(userId: Uuid, filter: ReportFilter = ReportFilter()): List<ReportRes>
     fun getById(id: Uuid): ReportRes?
     fun create(userId: Uuid, data: ReportCreateReq): ReportRes
     fun update(userId: String, id: Uuid, data: ReportUpdateReq): ReportRes?

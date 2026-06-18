@@ -1,21 +1,11 @@
 package com.ferosburn.project_management.plugins
 
-import com.ferosburn.project_management.repository.AuthRepository
-import com.ferosburn.project_management.repository.ProjectRepository
-import com.ferosburn.project_management.repository.ReportRepository
-import com.ferosburn.project_management.repository.TaskRepository
-import com.ferosburn.project_management.repository.UserRepository
-import com.ferosburn.project_management.routes.authRoutes
-import com.ferosburn.project_management.routes.profileRoutes
-import com.ferosburn.project_management.routes.projectRoutes
-import com.ferosburn.project_management.routes.reportRoutes
-import com.ferosburn.project_management.routes.taskRoutes
-import com.ferosburn.project_management.routes.userRoutes
-import io.ktor.http.ContentType
-import io.ktor.server.application.Application
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import com.ferosburn.project_management.repository.*
+import com.ferosburn.project_management.routes.*
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 
 fun Application.configureRouting(
     userRepository: UserRepository,
@@ -31,6 +21,6 @@ fun Application.configureRouting(
         projectRoutes(projectRepository, userRepository)
         taskRoutes(taskRepository)
         reportRoutes(reportRepository)
-        profileRoutes(userRepository, projectRepository)
+        profileRoutes(userRepository, projectRepository, reportRepository)
     }
 }
