@@ -2,6 +2,7 @@ package com.ferosburn.project_management.network
 
 import com.ferosburn.project_management.models.ApiResponse
 import com.ferosburn.project_management.models.project.ProjectRes
+import com.ferosburn.project_management.models.report.ReportRes
 import com.ferosburn.project_management.models.user.UserRes
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -21,4 +22,10 @@ object ProfileApi : ProfileApiInterface {
                 bearerAuth(token)
             }.body()
         }
+
+    override suspend fun getUserReports(): NetworkResult<ApiResponse<List<ReportRes>>> = safeApiCall(true) { token ->
+        _client.get("/profile/reports") {
+            bearerAuth(token)
+        }.body()
+    }
 }

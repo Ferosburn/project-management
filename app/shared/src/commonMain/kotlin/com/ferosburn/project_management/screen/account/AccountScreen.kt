@@ -3,6 +3,7 @@ package com.ferosburn.project_management.screen.account
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ferosburn.project_management.component.report.ReportItem
 import com.ferosburn.project_management.component.scaffold.AppScaffold2
 import com.ferosburn.project_management.component.tooltip.InfoTooltipBox
 
@@ -79,77 +81,112 @@ fun AccountScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
 
-            is AccountDataUiState.Success -> Column(
-                Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)
+            is AccountDataUiState.Success -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(20.dp),
             ) {
                 val profileData = profileState.data
-                Row {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            profileData.name,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            profileData.division?.name ?: profileData.role.name,
-                            fontSize = 10.sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Box {
-                        IconButton(
-                            onClick = { editExpanded = !editExpanded },
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            InfoTooltipBox("Edit Profile") {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                item {
+                    Row {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                profileData.name,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                profileData.division?.name ?: profileData.role.name,
+                                fontSize = 10.sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Box {
+                            IconButton(
+                                onClick = { editExpanded = !editExpanded },
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                InfoTooltipBox("Edit Profile") {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = editExpanded,
+                                onDismissRequest = { editExpanded = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit Profile", fontSize = 12.sp) },
+                                    onClick = {
+                                        editExpanded = false
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Change Password", fontSize = 12.sp) },
+                                    onClick = {
+                                        editExpanded = false
+                                    },
+                                )
                             }
                         }
-                        DropdownMenu(
-                            expanded = editExpanded,
-                            onDismissRequest = { editExpanded = false },
+                        IconButton(
+                            onClick = { viewModel.logout() },
+                            shape = RoundedCornerShape(12.dp),
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Edit Profile", fontSize = 12.sp) },
-                                onClick = {
-                                    editExpanded = false
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Change Password", fontSize = 12.sp) },
-                                onClick = {
-                                    editExpanded = false
-                                },
-                            )
-                        }
-                    }
-                    IconButton(
-                        onClick = { viewModel.logout() },
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        InfoTooltipBox("Logout") {
-                            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = Color.Red)
+                            InfoTooltipBox("Logout") {
+                                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = Color.Red)
+                            }
                         }
                     }
                 }
                 when (val projectsState = state.projects) {
                     is AccountProjectsUiState.Failed -> {}
-                    AccountProjectsUiState.Loading -> Box(
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+                    AccountProjectsUiState.Loading -> item {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+                    }
 
                     is AccountProjectsUiState.Success -> {
                         val projects = projectsState.data
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                "Contributed Projects",
-                                fontWeight = FontWeight.Bold,
-                            )
-                            projects.forEach { project ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Circle, contentDescription = null, Modifier.size(8.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(project.name, Modifier.weight(1f))
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Contributed Projects",
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                projects.forEach { project ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.Circle, contentDescription = null, Modifier.size(8.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(project.name, Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                when (val reportsState = state.reports) {
+                    is AccountReportsUiState.Failed -> {}
+                    AccountReportsUiState.Loading -> item {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+                    }
+
+                    is AccountReportsUiState.Success -> {
+                        val reports = reportsState.data
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Recent Reports",
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                reports.forEach { report ->
+                                    ReportItem(
+                                        userId = viewModel.userId,
+                                        report = report,
+                                        onOpenEditDialog = viewModel.reportsDelegate::openFormDialog,
+                                        onOpenDeleteDialog = viewModel.reportsDelegate::openDeleteDialog,
+                                    )
                                 }
                             }
                         }
